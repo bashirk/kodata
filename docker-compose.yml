@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    container_name: kodata
+    restart: always
+    ports:
+      - "5173:80"
+    volumes:
+      - .:/app
+    command: pnpm run dev

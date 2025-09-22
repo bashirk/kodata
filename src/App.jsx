@@ -392,9 +392,9 @@ function App() {
                   <Button 
                     variant="outline" 
                     className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors duration-200"
-                    onClick={() => window.open('https://chat.whatsapp.com/your-group-invite-code', '_blank')}
+                    onClick={() => window.open('mailto:hi@kobotai.co', '_blank')}
                   >
-                    Join WhatsApp Group
+                    Next Event Upcoming
                   </Button>
                 </CardContent>
               </Card>

@@ -206,10 +206,10 @@ function App() {
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-8">
               <span className="block mb-2">Empowering Communities Through</span>
-              <span className="block bg-clip-text">Data Curation & Web3 Learning</span>
+              <span className="block bg-clip-text">HiiL Data Curation</span>
             </h1>
             <p className="text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Join Africa's largest data curation platform where communities learn Web3 and AI skills while curating, validating, and contributing to open datasets. Earn future MAD tokens for your data activities.
+              AI systems are only as good as the data they&apos;re trained on. The problem? Most global datasets ignore local realities, leaving critical industries like agriculture, climate, and defense underserved. That&apos;s where our KoData community comes in.
             </p>
             <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
               <span className="font-semibold">Coming Soon:</span> MAD tokens will reward data contributors, annotators, and validators who help build Africa's largest decentralized data repository.
@@ -235,11 +235,11 @@ function App() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-8 max-w-4xl mx-auto">
               <div className="text-center p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <AnimatedCounter end={10000} className="text-3xl font-bold web3-gradient-primary bg-clip-text text-transparent" />
+                <AnimatedCounter end={217} className="text-3xl font-bold web3-gradient-primary bg-clip-text text-transparent" />
                 <p className="text-gray-600 mt-2 font-medium">Data Contributors</p>
               </div>
               <div className="text-center p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <AnimatedCounter end={50000} suffix="+" className="text-3xl font-bold web3-gradient-primary bg-clip-text text-transparent" />
+                <AnimatedCounter end={5000} suffix="+" className="text-3xl font-bold web3-gradient-primary bg-clip-text text-transparent" />
                 <p className="text-gray-600 mt-2 font-medium">Datasets Curated</p>
               </div>
               <div className="text-center p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
@@ -259,7 +259,8 @@ function App() {
               About KoData
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We're on a mission to democratize data literacy and Web3 education across Africa, 
+              We are making Africans not just consumers of AI, but a producer of world-class, context-aware datasets that power innovation and solve big challenges.
+              By doing this, we're working to also democratize data literacy and Web3 education across Africa, 
               creating opportunities for the next generation of data scientists and blockchain developers.
             </p>
           </div>
@@ -338,7 +339,7 @@ function App() {
               {
                 title: "Data Curation Masterclass",
                 description: "Learn how to curate and validate datasets for Web3 and AI applications",
-                date: "May 15, 2024",
+                date: "April 15, 2025",
                 location: "Lagos, Nigeria",
                 image: "/IMG_0775.jpg",
                 attendees: 75
@@ -347,17 +348,17 @@ function App() {
                 title: "Web3 Data Labeling Hackathon w/ Binance",
                 description: "Collaborate on data labeling projects and earn BSC tokens for your contributions",
                 date: "February 22, 2025",
-                location: "Ondo, Nigeria",
-                image: "/IMG_0833.jpg",
-                attendees: 32
+                location: "Ekiti, Nigeria",
+                image: "/IMG_0835.JPG",
+                attendees: 280
               },
               {
                 title: "AI Model Training Data Session",
                 description: "Hands-on session on preparing quality datasets for AI model training",
-                date: "April 5, 2025",
-                location: "Ekiti, Nigeria",
+                date: "May 5, 2024",
+                location: "Ondo, Nigeria",
                 image: "/IMG_0833.jpg",
-                attendees: 280
+                attendees: 32
               }
             ].map((event, index) => (
               <Card key={index} className="overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
@@ -406,8 +407,8 @@ function App() {
               </a>
             </p>
             <p className="text-sm text-gray-500">
-              📸 <strong>Photo Upload Guide:</strong> Event photos can be added by organizers through our admin panel. 
-              Contact us at events@kodata.co to become an event organizer and upload your event photos.
+              📸 <strong>Photo Upload Guide:</strong> Event photos are added by organizers through our admin panel. 
+              Contact us at events@data.kobotai.co to become an event organizer and upload your event photos.
             </p>
           </div>
         </div>
@@ -457,8 +458,8 @@ function App() {
                 <h3 className="text-xl font-semibold text-white mb-6">How It Works</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-purple-600/30 rounded-lg border border-purple-500">
-                    <div className="text-2xl font-bold text-white">Premium</div>
-                    <div className="text-sm text-gray-300">Learning Access</div>
+                    <div className="text-2xl font-bold text-white">Advanced</div>
+                    <div className="text-sm text-gray-300">Learning Curriculum</div>
                   </div>
                   <div className="text-center p-4 bg-cyan-600/30 rounded-lg border border-cyan-500">
                     <div className="text-2xl font-bold text-white">Governance</div>
@@ -469,7 +470,7 @@ function App() {
             </div>
 
             <div className="space-y-6">
-              <div className="bg-gray-800 rounded-2xl p-8 text-white border border-gray-700">
+              {/* <div className="bg-gray-800 rounded-2xl p-8 text-white border border-gray-700">
                 <h3 className="text-2xl font-bold mb-4">Current Token Price</h3>
                 <div className="text-4xl font-bold mb-2">$0.25</div>
                 <div className="text-green-200 mb-6">↗ +15% this month</div>
@@ -480,7 +481,7 @@ function App() {
                 >
                   Join DataDAO Now
                 </Button>
-              </div>
+              </div> */}
 
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 web3-glass border border-white/20">
                 <h3 className="text-xl font-semibold text-white mb-6">How It Works</h3>
@@ -635,8 +636,7 @@ function App() {
                 <span className="text-xl font-bold">KoData</span>
               </div>
               <p className="text-gray-400 mb-4">
-                Empowering African youth through data literacy and Web3 education, 
-                building the future of decentralized data contribution.
+                We curate, clean, and annotate high-quality datasets tailored for African AgriTech, ClimateTech, and emerging market applications; bridging the gap between raw data and real-world impact. With a mix of AI-powered labeling and human-in-the-loop validation, KoData ensures accuracy, cultural relevance, and scalability at a fraction of the traditional cost.
               </p>
               <div className="flex space-x-4">
                 <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white transition-colors duration-200">
@@ -662,9 +662,9 @@ function App() {
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>Email: hello@kodata.org</li>
-                <li>Location: Lagos, Nigeria</li>
-                <li>Community: Discord</li>
+                <li>events@data.kobotai.co</li>
+                <li>Yaba, Lagos, Nigeria</li>
+                <li>Discord</li>
               </ul>
             </div>
           </div>

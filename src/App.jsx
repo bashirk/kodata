@@ -37,9 +37,7 @@ import { FloatingActionButton } from './components/FloatingActionButton.jsx'
 import { ContactForm } from './components/ContactForm.jsx'
 import { PartnerForm } from './components/PartnerForm.jsx'
 import { DataDAOModal } from './components/DataDAOModal.jsx'
-import devcImage from './assets/IMG_0833.jpg'
-import binanceImage from './assets/IMG_0835.jpg'
-import telopImage from './assets/IMG_0775.jpg'
+
 import './App.css'
 
 function App() {
@@ -342,7 +340,7 @@ function App() {
                 description: "Learn how to curate and validate datasets for Web3 and AI applications",
                 date: "May 15, 2024",
                 location: "Lagos, Nigeria",
-                image: telopImage,
+                image: "/IMG_0775.jpg",
                 attendees: 75
               },
               {
@@ -350,7 +348,7 @@ function App() {
                 description: "Collaborate on data labeling projects and earn BSC tokens for your contributions",
                 date: "February 22, 2025",
                 location: "Ondo, Nigeria",
-                image: binanceImage,
+                image: "/IMG_0833.jpg",
                 attendees: 32
               },
               {
@@ -358,7 +356,7 @@ function App() {
                 description: "Hands-on session on preparing quality datasets for AI model training",
                 date: "April 5, 2025",
                 location: "Ekiti, Nigeria",
-                image: devcImage,
+                image: "/IMG_0833.jpg",
                 attendees: 280
               }
             ].map((event, index) => (

@@ -1,11 +1,12 @@
 # Stage 1: Build
+# sudo git clone https://github.com/bashirk/kodata app
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Copy dependencies & install
-COPY package.json package-lock.json ./
-RUN npm install --frozen-lockfile
+COPY package.json ./
+RUN npm install
 
 # Copy source & build
 COPY . .

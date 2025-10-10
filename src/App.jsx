@@ -179,109 +179,170 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-50">
-      <Navigation />
-      {/* Floating Action Button */}
-      <button
-        onClick={openDataDAOModal}
-        className="fixed bottom-8 right-8 web3-gradient-primary text-white p-4 rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-110 web3-neon-glow web3-float z-50"
-        aria-label="Join DataDAO"
-      >
-        <Zap className="h-6 w-6" />
-      </button>
-      <DataDAOModal 
-        isOpen={isDataDAOModalOpen} 
-        onClose={() => setIsDataDAOModalOpen(false)} 
-      />
-
-      {/* Hero Section */}
-      <section id="home" className="relative py-20 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 web3-gradient-primary opacity-10"></div>
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-          <div className="absolute top-40 right-10 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+    <div className="min-h-screen bg-white">
+       <Navigation />
+       {/* Floating Action Button */}
+       <button
+         onClick={openDataDAOModal}
+        className="group fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-700 hover:via-pink-700 hover:to-purple-700 text-white p-5 rounded-full shadow-2xl hover:shadow-purple-500/25 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 z-50 border-2 border-white/20 backdrop-blur-sm"
+         aria-label="Join DataDAO"
+       >
+        <div className="relative">
+          <Zap className="h-6 w-6 group-hover:animate-pulse" />
+          {/* Pulsing ring effect */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-ping opacity-20"></div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-8">
-              <span className="block mb-2">Empowering Communities Through</span>
-              <span className="block bg-clip-text">HiiL Data Curation</span>
+        {/* Tooltip */}
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          Join DataDAO
+          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+        </div>
+       </button>
+       <DataDAOModal 
+         isOpen={isDataDAOModalOpen} 
+         onClose={() => setIsDataDAOModalOpen(false)} 
+       />
+
+       {/* Hero Section */}
+      <section id="home" className="relative pt-32 pb-16 lg:pt-40 lg:pb-20 overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-blue-100/20 to-purple-100/20"></div>
+
+        {/* Animated Background Orbs */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-pink-400/20 to-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl">
+            <div className="mb-6">
+              <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 px-4 py-2 text-sm font-medium shadow-lg">
+                🚀 Now Live: DataDAO Mainnet
+              </Badge>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 mb-6 leading-tight hero-title-mobile">
+              <span className="block bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
+                Community Data
+              </span>
+              <span className="block bg-gradient-to-r from-purple-800 via-pink-800 to-blue-800 bg-clip-text text-transparent">
+                Built for Impact
+              </span>
             </h1>
-            <p className="text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto mb-8">
-              AI systems are only as good as the data they&apos;re trained on. The problem? Most global datasets ignore local realities, leaving critical industries like agriculture, climate, and defense underserved. That&apos;s where our KoData community comes in.
+
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-700 max-w-3xl mb-8 lg:mb-10 leading-relaxed hero-subtitle-mobile">
+              KoData empowers African communities to curate high-quality datasets for AI and Web3 — private by design,
+              <span className="text-purple-600 font-semibold"> culturally relevant</span>, and built for real-world impact.
             </p>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
-              <span className="font-semibold">Coming Soon:</span> MAD tokens will reward data contributors, annotators, and validators who help build Africa's largest decentralized data repository.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+
+            {/* Stats Preview */}
+            <div className="flex flex-wrap gap-8 mb-10">
+              {[
+                { number: '500+', label: 'Students Trained' },
+                { number: '150+', label: 'Datasets Created' },
+                { number: '25+', label: 'Communities' },
+                { number: '10K+', label: 'MAD Tokens' }
+              ].map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    {stat.number}
+                  </div>
+                  <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 size="lg" 
-                className="web3-gradient-primary text-white px-8 py-3 rounded-lg font-semibold web3-button-glow transition-all duration-200 transform hover:scale-105 shadow-lg"
+                className="group relative rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 hover:from-purple-700 hover:via-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden"
                 onClick={openDataDAOModal}
               >
-                <Rocket className="h-5 w-5 mr-2" />
-                Join DataDAO
+                <span className="relative z-10 flex items-center">
+                  Start Building DataDAO
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </Button>
+
               <Button 
                 size="lg" 
-                variant="outline" 
-                className="border-purple-500 text-purple-600 hover:bg-purple-50 hover:border-purple-600 px-8 py-3 rounded-lg font-semibold transition-all duration-200"
-                onClick={() => scrollToSection('#about')}
-              >
-                <Sparkles className="h-5 w-5 mr-2" />
-                Learn More
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-8 max-w-4xl mx-auto">
-              <div className="text-center p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <AnimatedCounter end={217} className="text-3xl font-bold web3-gradient-primary bg-clip-text text-transparent" />
-                <p className="text-gray-600 mt-2 font-medium">Data Contributors</p>
-              </div>
-              <div className="text-center p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <AnimatedCounter end={5000} suffix="+" className="text-3xl font-bold web3-gradient-primary bg-clip-text text-transparent" />
-                <p className="text-gray-600 mt-2 font-medium">Datasets Curated</p>
-              </div>
-              <div className="text-center p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <AnimatedCounter end={25000} suffix="+" className="text-3xl font-bold web3-gradient-primary bg-clip-text text-transparent" />
-                <p className="text-gray-600 mt-2 font-medium">MAD Tokens Reserved</p>
+                variant="outline"
+                className="rounded-full border-2 border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 px-8 py-4 font-semibold transition-all duration-300"
+                  onClick={() => scrollToSection('#about')}
+                >
+                Explore Our Impact
+                <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
               </div>
             </div>
           </div>
-        </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              About KoData
+      <section id="about" className="py-16 lg:py-20 bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 relative overflow-hidden section-reveal">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_50%,_rgba(120,119,198,0.3),transparent_50%)] opacity-20"></div>
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.15),transparent_50%)] opacity-20"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 lg:mb-16">
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mb-6">
+              <span className="text-sm font-medium text-gray-700">Our Mission</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              Empowering Africa's
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Digital Future</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We are making Africans not just consumers of AI, but a producer of world-class, context-aware datasets that power innovation and solve big challenges.
-              By doing this, we're working to also democratize data literacy and Web3 education across Africa, 
-              creating opportunities for the next generation of data scientists and blockchain developers.
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              We are transforming Africans from AI consumers into world-class data producers, creating culturally relevant datasets that power innovation across the continent.
+              Through democratized data literacy and Web3 education, we're building the next generation of
+              <span className="text-purple-600 font-semibold"> African data scientists</span> and
+              <span className="text-blue-600 font-semibold"> blockchain developers</span>.
             </p>
           </div>
+
           <div className="grid lg:grid-cols-3 gap-8">
             {programs.map((program, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group">
-                <CardHeader className="text-center pb-4">
-                  <div className={`flex justify-center mb-4 text-white p-3 rounded-full bg-gradient-to-r ${program.color} group-hover:scale-110 transition-transform duration-300`}>
+              <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-white/80 backdrop-blur-sm overflow-hidden ${
+                index === 0 ? 'animate-stagger-1' :
+                index === 1 ? 'animate-stagger-2' :
+                'animate-stagger-3'
+              }`}>
+                {/* Gradient border effect */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${program.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
+
+                {/* Hover glow effect */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${program.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-xl`}></div>
+
+                <CardHeader className="relative text-center pb-6 p-8">
+                  <div className={`relative flex justify-center mb-6 text-white p-4 rounded-2xl bg-gradient-to-br ${program.color} group-hover:scale-110 transition-all duration-500 shadow-lg`}>
+                    {/* Icon glow effect */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${program.color} rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500`}></div>
+                    <div className="relative">
                     {program.icon}
+                    </div>
                   </div>
-                  <CardTitle className="text-xl font-bold group-hover:text-blue-600 transition-colors duration-200">{program.title}</CardTitle>
-                  <CardDescription className="text-gray-600">
+
+                  <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-gray-800 transition-colors duration-300 mb-3">
+                    {program.title}
+                  </CardTitle>
+
+                  <CardDescription className="text-gray-600 leading-relaxed text-base">
                     {program.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
+
+                <CardContent className="relative px-8 pb-8">
+                  <ul className="space-y-3">
                     {program.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center text-sm text-gray-700">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                        {feature}
+                      <li key={idx} className="flex items-start text-gray-700 group-hover:text-gray-800 transition-colors duration-300">
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-r ${program.color} flex items-center justify-center mr-3 mt-0.5`}>
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="text-sm leading-relaxed">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -293,28 +354,61 @@ function App() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Success Stories
+      <section className="py-16 lg:py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative section-reveal">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-r from-blue-400/30 to-purple-400/30 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-10 right-10 w-40 h-40 bg-gradient-to-r from-pink-400/30 to-purple-400/30 rounded-full blur-2xl"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 lg:mb-16">
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-100 to-blue-100 rounded-full mb-6">
+              <span className="text-sm font-medium text-gray-700">Community Impact</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              Real Stories from
+              <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"> Real People</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Hear from our community members who are making a difference in their communities.
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Discover how our community members are transforming their futures through data literacy,
+              Web3 education, and community-driven innovation across Africa.
             </p>
           </div>
+
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="text-3xl mr-4">{testimonial.avatar}</div>
+              <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm overflow-hidden ${
+                index === 0 ? 'animate-stagger-1' :
+                index === 1 ? 'animate-stagger-2' :
+                'animate-stagger-3'
+              }`}>
+                {/* Quote decoration */}
+                <div className="absolute top-4 left-4 text-4xl text-purple-200 opacity-50 group-hover:opacity-75 transition-opacity duration-300">"</div>
+
+                <CardContent className="relative p-8">
+                  <div className="flex items-center mb-6">
+                    <div className="relative">
+                      <div className="text-4xl mr-4 p-3 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full group-hover:scale-110 transition-transform duration-300">
+                        {testimonial.avatar}
+                      </div>
+                      {/* Avatar glow */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                      <p className="text-sm text-gray-600">{testimonial.role}</p>
+                      <h4 className="font-bold text-lg text-gray-900 group-hover:text-gray-800 transition-colors duration-300">
+                        {testimonial.name}
+                      </h4>
+                      <p className="text-sm text-gray-600 font-medium">{testimonial.role}</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 italic">"{testimonial.content}"</p>
+
+                  <blockquote className="text-gray-700 leading-relaxed text-base italic relative">
+                    <span className="relative z-10">"{testimonial.content}"</span>
+                  </blockquote>
+
+                  {/* Decorative gradient bar */}
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
                 </CardContent>
               </Card>
             ))}
@@ -323,17 +417,28 @@ function App() {
       </section>
 
       {/* Events Section */}
-      <section id="events" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Community Events
+      <section id="events" className="py-16 lg:py-20 bg-white relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 lg:mb-16">
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-100 to-red-100 rounded-full mb-6">
+              <span className="text-sm font-medium text-gray-700">Join Our Community</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              Upcoming
+              <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent"> Community Events</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Join our vibrant community events where we bring together data enthusiasts, 
-              Web3 learners, and AI practitioners to collaborate, learn, and build together.
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Connect with fellow data enthusiasts, Web3 innovators, and AI practitioners at our vibrant community events.
+              Learn, collaborate, and build the future of decentralized technology together.
             </p>
           </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
@@ -342,7 +447,8 @@ function App() {
                 date: "April 15, 2025",
                 location: "Lagos, Nigeria",
                 image: "/IMG_0775.jpg",
-                attendees: 75
+                attendees: 75,
+                category: "Workshop"
               },
               {
                 title: "Web3 Data Labeling Hackathon w/ Binance",
@@ -350,7 +456,8 @@ function App() {
                 date: "February 22, 2025",
                 location: "Ekiti, Nigeria",
                 image: "/IMG_0835.JPG",
-                attendees: 280
+                attendees: 280,
+                category: "Hackathon"
               },
               {
                 title: "AI Model Training Data Session",
@@ -358,177 +465,337 @@ function App() {
                 date: "May 5, 2024",
                 location: "Ondo, Nigeria",
                 image: "/IMG_0833.jpg",
-                attendees: 32
+                attendees: 32,
+                category: "Training"
               }
             ].map((event, index) => (
-              <Card key={index} className="overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                <div className="relative">
+              <Card key={index} className="group relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white border-0">
+                <div className="relative overflow-hidden">
                   <img 
                     src={event.image} 
                     alt={event.title}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    {event.attendees} attended
+
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                  {/* Category badge */}
+                  <div className="absolute top-4 left-4">
+                    <Badge className="bg-white/90 text-gray-800 border-0 backdrop-blur-sm">
+                      {event.category}
+                    </Badge>
+                  </div>
+
+                  {/* Attendees badge */}
+                  <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                    {event.attendees} joined
                   </div>
                 </div>
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-blue-600 font-semibold">{event.date}</span>
-                    <span className="text-sm text-gray-500 flex items-center">
+
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+                      {event.date}
+                    </Badge>
+                    <div className="flex items-center text-sm text-gray-500">
                       <MapPin className="w-4 h-4 mr-1" />
-                      {event.location}
-                    </span>
+                      <span className="truncate">{event.location}</span>
+                    </div>
                   </div>
-                  <CardTitle className="text-lg font-bold text-gray-900 mb-2">
+
+                  <CardTitle className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-700 transition-colors duration-300 leading-tight">
                     {event.title}
                   </CardTitle>
-                  <CardDescription className="text-gray-600">
+
+                  <CardDescription className="text-gray-600 leading-relaxed">
                     {event.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+
+                <CardContent className="pt-0">
                   <Button 
-                    variant="outline" 
-                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors duration-200"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                     onClick={() => window.open('mailto:hi@kobotai.co', '_blank')}
                   >
-                    Next Event Upcoming
+                    Register Interest
                   </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
-          <div className="text-center mt-12">
-            <p className="text-gray-600 mb-4">
-              Want to host or speak at our events? 
-              <a href="#partners" className="text-blue-600 hover:text-blue-800 font-semibold ml-1">
-                Partner with us
-              </a>
+
+          <div className="text-center mt-16 p-8 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Want to organize an event?</h3>
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Join our network of event organizers and help us bring data literacy and Web3 education to more communities across Africa.
             </p>
-            <p className="text-sm text-gray-500">
-              📸 <strong>Photo Upload Guide:</strong> Event photos are added by organizers through our admin panel. 
-              Contact us at events@data.kobotai.co to become an event organizer and upload your event photos.
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                variant="outline"
+                className="border-2 border-purple-300 text-purple-600 hover:bg-purple-50 hover:border-purple-400"
+                onClick={() => scrollToSection('#partners')}
+              >
+                Become an Organizer
+              </Button>
+              <Button
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                onClick={() => window.open('mailto:events@data.kobotai.co', '_blank')}
+              >
+                Contact Events Team
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500 mt-6">
+              📸 <strong>Photo Upload Guide:</strong> Event photos are managed by our community organizers.
+              Contact us at events@data.kobotai.co to join our organizer network.
             </p>
           </div>
         </div>
       </section>
 
       {/* DataDAO Section */}
-      <section id="datadao" className="py-20 bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              DataDAO Participation
+      <section id="datadao" className="py-16 lg:py-20 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white relative overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900/50 via-blue-900/30 to-pink-900/50"></div>
+          <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 lg:mb-16">
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-800/50 to-pink-800/50 rounded-full mb-6 backdrop-blur-sm border border-purple-500/30">
+              <Coins className="w-4 h-4 mr-2 text-purple-300" />
+              <span className="text-sm font-medium text-purple-200">Decentralized Rewards</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+              Join the
+              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"> DataDAO Revolution</span>
             </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Join our decentralized data ecosystem. Contribute to data curation, annotation, and validation 
-              while earning MAD tokens for your on-chain activities. Help build the future of Web3 and AI data infrastructure.
+            <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              Be part of Africa's largest decentralized data ecosystem. Contribute to data curation, annotation, and validation
+              while earning <span className="text-purple-400 font-semibold">MAD tokens</span> for your on-chain activities.
+              Help build the future of Web3 and AI data infrastructure.
             </p>
           </div>
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-            <div className="space-y-6">
-              <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-12 h-12 web3-gradient-primary rounded-xl flex items-center justify-center web3-neon-glow">
-                    <Database className="h-6 w-6 text-white" />
+          <div className="grid lg:grid-cols-2 gap-12 items-start mb-12 lg:mb-16">
+            <div className="space-y-8">
+              {/* Contribution Types Cards */}
+              <div className="grid gap-6">
+                {dataDAOFeatures.map((feature, index) => (
+                  <Card key={index} className="group relative bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-gray-600/70 transition-all duration-500 transform hover:-translate-y-1 overflow-hidden">
+                    {/* Gradient overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
+
+                    <CardContent className="relative p-6">
+                      <div className="flex items-start space-x-4">
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                          <div className="text-white">
+                            {feature.icon}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gray-200 transition-colors duration-300">
+                            {feature.title}
+                          </h3>
+                          <p className="text-gray-300 mb-4 leading-relaxed">
+                            {feature.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <Badge className={`bg-gradient-to-r ${feature.color} text-white border-0 px-3 py-1`}>
+                              {feature.reward}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-300"
+                              onClick={openDataDAOModal}
+                            >
+                              Start Contributing
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Token Rewards Card */}
+              <Card className="relative bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm border border-purple-500/30 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-2xl"></div>
+                <CardHeader className="relative pb-4">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                      <Coins className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-white">Data Contribution Rewards</h3>
-                    <p className="text-gray-300">Earn MAD tokens for sharing anonymized data</p>
+                      <h3 className="text-lg font-bold text-white">MAD Token Rewards</h3>
+                      <p className="text-purple-200 text-sm">Earn while you contribute</p>
+                    </div>
                   </div>
+                </CardHeader>
+                <CardContent className="relative space-y-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg border border-purple-400/30 backdrop-blur-sm">
+                      <span className="text-purple-100">Educational Data</span>
+                      <Badge className="bg-purple-600/50 text-purple-100 border-purple-400/50">50 MAD/GB</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg border border-cyan-400/30 backdrop-blur-sm">
+                      <span className="text-cyan-100">Local Language Data</span>
+                      <Badge className="bg-cyan-600/50 text-cyan-100 border-cyan-400/50">75 MAD/GB</Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg border border-pink-400/30 backdrop-blur-sm">
+                      <span className="text-pink-100">Cultural Context Data</span>
+                      <Badge className="bg-pink-600/50 text-pink-100 border-pink-400/50">100 MAD/GB</Badge>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg border border-gray-600">
-                    <span className="text-gray-200">Educational Data</span>
-                    <Badge className="bg-purple-600/30 text-purple-200 border-purple-500">50 MAD/GB</Badge>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg border border-gray-600">
-                    <span className="text-gray-200">Local Language Data</span>
-                    <Badge className="bg-cyan-600/30 text-cyan-200 border-cyan-500">75 MAD/GB</Badge>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-8">
+              {/* How It Works Card */}
+              <Card className="relative bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl overflow-hidden">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-2xl"></div>
+
+                <CardHeader className="relative pb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <Zap className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">How It Works</h3>
+                      <p className="text-blue-200 text-sm">Simple steps to start earning</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-700 rounded-lg border border-gray-600">
-                    <span className="text-gray-200">Cultural Context Data</span>
-                    <Badge className="bg-pink-600/30 text-pink-200 border-pink-500">100 MAD/GB</Badge>
+                </CardHeader>
+
+                <CardContent className="relative space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                        1
                   </div>
+                      <div>
+                        <p className="text-white font-medium">Connect Your Wallet</p>
+                        <p className="text-blue-200 text-sm">Secure Web3 authentication</p>
                 </div>
               </div>
 
-              <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-                <h3 className="text-xl font-semibold text-white mb-6">How It Works</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-purple-600/30 rounded-lg border border-purple-500">
-                    <div className="text-2xl font-bold text-white">Advanced</div>
-                    <div className="text-sm text-gray-300">Learning Curriculum</div>
+                    <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                        2
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">Upload & Validate Data</p>
+                        <p className="text-purple-200 text-sm">Contribute to our ecosystem</p>
+                      </div>
                   </div>
-                  <div className="text-center p-4 bg-cyan-600/30 rounded-lg border border-cyan-500">
-                    <div className="text-2xl font-bold text-white">Governance</div>
-                    <div className="text-sm text-gray-300">Voting Rights</div>
+
+                    <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                        3
                   </div>
+                      <div>
+                        <p className="text-white font-medium">Earn MAD Tokens</p>
+                        <p className="text-pink-200 text-sm">Instant rewards on-chain</p>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              {/* <div className="bg-gray-800 rounded-2xl p-8 text-white border border-gray-700">
-                <h3 className="text-2xl font-bold mb-4">Current Token Price</h3>
-                <div className="text-4xl font-bold mb-2">$0.25</div>
-                <div className="text-green-200 mb-6">↗ +15% this month</div>
                 <Button 
                   size="lg" 
-                  className="bg-white text-purple-600 hover:bg-gray-100 w-full font-bold"
+                    className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-700 hover:via-pink-700 hover:to-purple-700 text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
                   onClick={openDataDAOModal}
                 >
+                    <Coins className="mr-2 h-5 w-5" />
                   Join DataDAO Now
                 </Button>
-              </div> */}
+                </CardContent>
+              </Card>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 web3-glass border border-white/20">
-                <h3 className="text-xl font-semibold text-white mb-6">How It Works</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 web3-gradient-primary rounded-full flex items-center justify-center text-white font-semibold web3-neon-glow">1</div>
-                    <p className="text-gray-200">Connect your wallet and verify identity</p>
+              {/* Community Stats Card */}
+              <Card className="relative bg-gradient-to-br from-blue-900/50 to-purple-900/50 backdrop-blur-sm border border-blue-500/30 overflow-hidden">
+                <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-2xl"></div>
+
+                <CardHeader className="relative pb-4">
+                  <h3 className="text-xl font-bold text-white mb-4">Community Impact</h3>
+                </CardHeader>
+
+                <CardContent className="relative">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-white/10 rounded-lg border border-blue-400/30 backdrop-blur-sm">
+                      <div className="text-2xl font-bold text-blue-300">Governance</div>
+                      <div className="text-sm text-blue-200">Voting Rights</div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 web3-gradient-primary rounded-full flex items-center justify-center text-white font-semibold web3-neon-glow">2</div>
-                    <p className="text-gray-200">Upload anonymized data securely</p>
+                    <div className="text-center p-4 bg-white/10 rounded-lg border border-purple-400/30 backdrop-blur-sm">
+                      <div className="text-2xl font-bold text-purple-300">Advanced</div>
+                      <div className="text-sm text-purple-200">Learning</div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 web3-gradient-primary rounded-full flex items-center justify-center text-white font-semibold web3-neon-glow">3</div>
-                    <p className="text-gray-200">Earn MAD tokens instantly</p>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
       {/* Partners Section */}
-      <section id="partners" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Our Partners
+      <section id="partners" className="py-16 lg:py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 w-64 h-64 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-10 w-80 h-80 bg-gradient-to-r from-green-400/20 to-blue-400/20 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 lg:mb-16">
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-100 to-blue-100 rounded-full mb-6">
+              <span className="text-sm font-medium text-gray-700">Strategic Alliances</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              Our
+              <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"> Valued Partners</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We collaborate with leading organizations in the blockchain and technology space 
-              to bring world-class education to African communities.
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              We collaborate with leading organizations in the blockchain, technology, and education sectors
+              to bring world-class Web3 and data literacy education to African communities.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             {partners.map((partner, index) => (
-              <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
+              <Card key={index} className="group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm overflow-hidden cursor-pointer"
                     onClick={() => partner.url !== '#' && window.open(partner.url, '_blank')}>
-                <CardHeader className="text-center">
-                  <div className={`text-4xl mb-4 p-4 rounded-full bg-gradient-to-r ${partner.color} text-white mx-auto w-fit group-hover:scale-110 transition-transform duration-300`}>
+                {/* Gradient border effect */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${partner.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-lg`}></div>
+
+                {/* Hover glow effect */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${partner.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-xl rounded-lg`}></div>
+
+                <CardHeader className="relative text-center p-8">
+                  <div className={`relative text-5xl mb-6 p-5 rounded-2xl bg-gradient-to-br ${partner.color} text-white mx-auto w-fit shadow-lg group-hover:scale-110 transition-all duration-500`}>
+                    {/* Icon glow effect */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${partner.color} rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500`}></div>
+                    <div className="relative">
                     {partner.logo}
+                    </div>
                   </div>
-                  <CardTitle className="text-lg font-bold group-hover:text-blue-600 transition-colors duration-200">{partner.name}</CardTitle>
-                  <CardDescription className="text-gray-600">
+
+                  <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-gray-800 transition-colors duration-300 mb-3">
+                    {partner.name}
+                  </CardTitle>
+
+                  <CardDescription className="text-gray-600 leading-relaxed text-base">
                     {partner.description}
                   </CardDescription>
+
+                  {/* Partnership indicator */}
+                  <div className="mt-4 flex items-center justify-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${partner.color}`}></div>
+                    <span className="text-sm text-gray-500 font-medium">Active Partner</span>
+                  </div>
                 </CardHeader>
               </Card>
             ))}
@@ -625,51 +892,100 @@ function App() {
       */}
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+      <footer className="relative bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white py-16 overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20"></div>
+          <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-10 right-10 w-40 h-40 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-full blur-2xl"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-yellow-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">KD</span>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg">KD</span>
                 </div>
-                <span className="text-xl font-bold">KoData</span>
+                <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">KoData</span>
               </div>
-              <p className="text-gray-400 mb-4">
-                We curate, clean, and annotate high-quality datasets tailored for African AgriTech, ClimateTech, and emerging market applications; bridging the gap between raw data and real-world impact. With a mix of AI-powered labeling and human-in-the-loop validation, KoData ensures accuracy, cultural relevance, and scalability at a fraction of the traditional cost.
+              <p className="text-gray-300 mb-6 leading-relaxed text-base">
+                We curate, clean, and annotate high-quality datasets tailored for African AgriTech, ClimateTech, and emerging market applications.
+                Bridging the gap between raw data and real-world impact through AI-powered labeling and human-in-the-loop validation.
               </p>
               <div className="flex space-x-4">
-                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white transition-colors duration-200">
+                <Button size="sm" className="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl">
                   <Github className="h-5 w-5" />
                 </Button>
-                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white transition-colors duration-200">
+                <Button size="sm" className="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl">
                   <Twitter className="h-5 w-5" />
                 </Button>
-                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white transition-colors duration-200">
+                <Button size="sm" className="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl">
                   <Mail className="h-5 w-5" />
                 </Button>
               </div>
             </div>
+
             <div>
-              <h3 className="font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><button onClick={() => scrollToSection('#about')} className="hover:text-white transition-colors duration-200">About Us</button></li>
-                <li><button onClick={() => scrollToSection('#datadao')} className="hover:text-white transition-colors duration-200">DataDAO</button></li>
-                <li><button onClick={() => scrollToSection('#programs')} className="hover:text-white transition-colors duration-200">Programs</button></li>
-                <li><button onClick={() => scrollToSection('#partners')} className="hover:text-white transition-colors duration-200">Partners</button></li>
+              <h3 className="font-bold text-white mb-6 text-lg">Quick Links</h3>
+              <ul className="space-y-3">
+                <li>
+                  <button onClick={() => scrollToSection('#about')} className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 flex items-center group">
+                    <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    About Us
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('#datadao')} className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 flex items-center group">
+                    <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    DataDAO
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('#events')} className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 flex items-center group">
+                    <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    Events
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('#partners')} className="text-gray-300 hover:text-white hover:translate-x-1 transition-all duration-300 flex items-center group">
+                    <ArrowRight className="w-4 h-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    Partners
+                  </button>
+                </li>
               </ul>
             </div>
+
             <div>
-              <h3 className="font-semibold mb-4">Contact</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>events@data.kobotai.co</li>
-                <li>Yaba, Lagos, Nigeria</li>
-                <li>Discord</li>
+              <h3 className="font-bold text-white mb-6 text-lg">Contact</h3>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-center">
+                  <Mail className="w-4 h-4 mr-2 text-purple-400" />
+                  events@data.kobotai.co
+                </li>
+                <li className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-2 text-blue-400" />
+                  Yaba, Lagos, Nigeria
+                </li>
+                <li className="flex items-center">
+                  <span className="w-4 h-4 mr-2 text-green-400">💬</span>
+                  Discord Community
+                </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 KoData. All rights reserved. Building the future of data literacy in Africa.</p>
+
+          <div className="border-t border-gray-800/50 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <p className="text-gray-400 text-sm">
+                &copy; 2025 KoData. All rights reserved. Building the future of data literacy in Africa.
+              </p>
+              <div className="mt-4 md:mt-0 flex items-center space-x-4 text-sm text-gray-400">
+                <span>🌍 Powered by African Innovation</span>
+                <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
+                <span>Web3 Enabled</span>
+              </div>
+            </div>
           </div>
         </div>
       </footer>

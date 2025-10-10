@@ -37,6 +37,7 @@ import { FloatingActionButton } from './components/FloatingActionButton.jsx'
 import { ContactForm } from './components/ContactForm.jsx'
 import { PartnerForm } from './components/PartnerForm.jsx'
 import { DataDAOModal } from './components/DataDAOModal.jsx'
+import { AuthProvider } from './contexts/AuthContext.jsx'
 
 import './App.css'
 
@@ -179,8 +180,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-       <Navigation />
+    <AuthProvider>
+      <div className="min-h-screen bg-white">
+         <Navigation />
        {/* Floating Action Button */}
        <button
          onClick={openDataDAOModal}
@@ -989,7 +991,8 @@ function App() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </AuthProvider>
   )
 }
 

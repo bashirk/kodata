@@ -1,0 +1,103 @@
+// API service for communicating with the backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+class ApiService {
+  constructor() {
+    this.baseURL = API_BASE_URL;
+    this.token = localStorage.getItem('auth_token');
+  }
+
+  setToken(token) {
+    this.token = token;
+    localStorage.setItem('auth_token', token);
+  }
+
+  clearToken() {
+    this.token = null;
+    localStorage.removeItem('auth_token');
+  }
+
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(this.token && { Authorization: `Bearer ${this.token}` }),
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
+  // Auth endpoints
+  async getChallenge() {
+    return this.request('/api/auth/challenge', { method: 'POST' });
+  }
+
+  async login(signature) {
+    const response = await this.request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(signature),
+    });
+    
+    if (response.token) {
+      this.setToken(response.token);
+    }
+    
+    return response;
+  }
+
+  // User endpoints
+  async getUserProfile() {
+    return this.request('/api/users/profile');
+  }
+
+  // Submission endpoints
+  async createSubmission(submissionData) {
+    return this.request('/api/submissions', {
+      method: 'POST',
+      body: JSON.stringify(submissionData),
+    });
+  }
+
+  async getSubmissions() {
+    return this.request('/api/submissions');
+  }
+
+  async getSubmission(id) {
+    return this.request(`/api/submissions/${id}`);
+  }
+
+  // Admin endpoints
+  async approveSubmission(id) {
+    return this.request(`/api/admin/approve-submission/${id}`, {
+      method: 'POST',
+    });
+  }
+
+  // Blockchain status
+  async getBlockchainStatus() {
+    return this.request('/api/blockchain/status');
+  }
+
+  // Health check
+  async healthCheck() {
+    return this.request('/health');
+  }
+}
+
+export const apiService = new ApiService();

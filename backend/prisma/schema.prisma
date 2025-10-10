@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// prisma/schema.prisma
+model User {
+  id             String    @id @default(uuid())
+  email          String?   @unique
+  name           String?
+  password       String?   @db.Text
+  emailVerified  DateTime?
+  image          String?
+  credits        Int       @default(3)
+  starknetAddress String?
+  liskAddress    String?    // Lisk address (e.g., base32 format)
+  btcAddress     String?
+  reputation     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  transactions   Transaction[]
+  submissions    Submission[]
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  amount      Int
+  currency    String
+  status      String
+  reference   String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Submission {
+  id           String      @id @default(uuid())
+  taskId       String
+  userId       String
+  resultHash   String
+  storageUri   String
+  liskTxId     String?     // Lisk tx id for reputation / attestation
+  status       SubmissionStatus @default(PENDING)
+  qualityScore Int?
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHALLENGED
+}

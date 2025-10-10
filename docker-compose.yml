@@ -1,8 +1,86 @@
 version: '3.8'
+
 services:
-  web:
-    build: .
-    container_name: kodata
-    restart: always
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: kodata-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kodata
+      POSTGRES_USER: kodata
+      POSTGRES_PASSWORD: kodata_password
     ports:
-      - "5173:80"
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kodata-network
+
+  # Redis for BullMQ
+  redis:
+    image: redis:7-alpine
+    container_name: kodata-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - kodata-network
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: kodata-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://kodata:kodata_password@postgres:5432/kodata
+      - DIRECT_URL=postgresql://kodata:kodata_password@postgres:5432/kodata
+      - REDIS_URL=redis://redis:6379
+      - FRONTEND_URL=http://localhost:5173
+      - STARKNET_RPC_URL=${STARKNET_RPC_URL:-https://starknet-testnet.public.blastapi.io}
+      - STARKNET_ACCOUNT_ADDRESS=${STARKNET_ACCOUNT_ADDRESS}
+      - STARKNET_PRIVATE_KEY=${STARKNET_PRIVATE_KEY}
+      - STARKNET_CONTRACT_ADDRESS=${STARKNET_CONTRACT_ADDRESS}
+      - LISK_BACKEND_PUBKEY=${LISK_BACKEND_PUBKEY}
+      - LISK_BACKEND_PRIVKEY=${LISK_BACKEND_PRIVKEY}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kodata-network
+    volumes:
+      - ./backend/prisma:/app/prisma
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: kodata-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+      - VITE_STARKNET_RPC_URL=${STARKNET_RPC_URL:-https://starknet-testnet.public.blastapi.io}
+      - VITE_LISK_WS_URL=wss://ws.api.lisk.com/
+    depends_on:
+      - backend
+    networks:
+      - kodata-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  kodata-network:
+    driver: bridge

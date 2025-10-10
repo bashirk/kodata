@@ -1,0 +1,138 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+import { apiService } from '../lib/apiService';
+import { walletService } from '../lib/walletService';
+
+const AuthContext = createContext();
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check for existing authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          const userData = await apiService.getUserProfile();
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        apiService.clearToken();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const login = async (walletType) => {
+    try {
+      setIsLoading(true);
+
+      // Get authentication challenge
+      const challenge = await apiService.getChallenge();
+
+      // Connect wallet
+      const wallet = await walletService.connectWallet(walletType);
+
+      // Sign the challenge message
+      const signature = await walletService.signMessage(challenge.message, wallet);
+
+      // Send signature to backend
+      const response = await apiService.login({
+        address: wallet.address,
+        signature: signature,
+        message: challenge.message,
+        walletType: walletType
+      });
+
+      setUser(response.user);
+      setIsAuthenticated(true);
+      
+      return response;
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    apiService.clearToken();
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  const createSubmission = async (submissionData) => {
+    try {
+      const submission = await apiService.createSubmission(submissionData);
+      return submission;
+    } catch (error) {
+      console.error('Failed to create submission:', error);
+      throw error;
+    }
+  };
+
+  const getSubmissions = async () => {
+    try {
+      const submissions = await apiService.getSubmissions();
+      return submissions;
+    } catch (error) {
+      console.error('Failed to get submissions:', error);
+      throw error;
+    }
+  };
+
+  const approveSubmission = async (submissionId) => {
+    try {
+      const result = await apiService.approveSubmission(submissionId);
+      return result;
+    } catch (error) {
+      console.error('Failed to approve submission:', error);
+      throw error;
+    }
+  };
+
+  const getBlockchainStatus = async () => {
+    try {
+      const status = await apiService.getBlockchainStatus();
+      return status;
+    } catch (error) {
+      console.error('Failed to get blockchain status:', error);
+      throw error;
+    }
+  };
+
+  const value = {
+    user,
+    isLoading,
+    isAuthenticated,
+    login,
+    logout,
+    createSubmission,
+    getSubmissions,
+    approveSubmission,
+    getBlockchainStatus,
+    walletService
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

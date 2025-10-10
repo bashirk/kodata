@@ -1,25 +1,55 @@
-# Stage 1: Build
-# sudo git clone https://github.com/bashirk/kodata app
-FROM node:20-alpine AS builder
+# Frontend Dockerfile
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy frontend dependencies & install
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install
+
+# Copy frontend source & build
+COPY . .
+RUN pnpm run build
+
+# Backend Dockerfile
+FROM node:20-alpine AS backend-builder
+
+WORKDIR /app/backend
+
+# Copy backend dependencies & install
+COPY backend/package.json backend/pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install
+
+# Copy backend source & build
+COPY backend/ .
+RUN pnpm run build
+
+# Production stage
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copy dependencies & install
-COPY package.json ./
-RUN npm install
+# Install pnpm
+RUN npm install -g pnpm
 
-# Copy source & build
-COPY . .
-RUN npm run build
+# Copy backend
+COPY --from=backend-builder /app/backend/dist ./backend/dist
+COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
+COPY --from=backend-builder /app/backend/package.json ./backend/package.json
+COPY --from=backend-builder /app/backend/prisma ./backend/prisma
 
-# Stage 2: Run on Nginx
-FROM nginx:alpine
+# Copy frontend build
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Copy build output to Nginx HTML dir
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Install serve for frontend
+RUN npm install -g serve
 
-# Expose Nginx port
-EXPOSE 5173
+# Create startup script
+RUN echo '#!/bin/sh\n\
+cd /app/backend && node dist/index.js &\n\
+cd /app/frontend && serve -s dist -l 5173 &\n\
+wait' > /app/start.sh && chmod +x /app/start.sh
 
-# Run Nginx
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 3001 5173
+
+CMD ["/app/start.sh"]

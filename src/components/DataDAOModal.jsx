@@ -17,10 +17,15 @@ import {
   AlertCircle,
   FileText,
   Image,
-  BarChart
+  BarChart,
+  Wallet,
+  ExternalLink,
+  Download
 } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 export function DataDAOModal({ isOpen, onClose }) {
+  const { user, isAuthenticated, login, createSubmission, isLoading } = useAuth()
   const [step, setStep] = useState(1)
   const [contributionType, setContributionType] = useState('')
   const [formData, setFormData] = useState({
@@ -33,6 +38,8 @@ export function DataDAOModal({ isOpen, onClose }) {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [loginError, setLoginError] = useState('')
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const contributionTypes = [
     {
@@ -85,31 +92,57 @@ export function DataDAOModal({ isOpen, onClose }) {
     }))
   }
 
+  const handleWalletLogin = async (walletType) => {
+    try {
+      setIsLoggingIn(true)
+      setLoginError('')
+      await login(walletType)
+    } catch (error) {
+      setLoginError(error.message)
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
     
-    // Simulate submission
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    
-    setIsSubmitting(false)
-    setIsSuccess(true)
-    
-    // Reset after 3 seconds
-    setTimeout(() => {
-      setIsSuccess(false)
-      setStep(1)
-      setContributionType('')
-      setFormData({
-        title: '',
-        description: '',
-        dataType: '',
-        file: null,
-        tags: '',
-        license: ''
-      })
-      onClose()
-    }, 3000)
+    try {
+      // Create submission data
+      const submissionData = {
+        taskId: `task_${Date.now()}`, // Generate a task ID
+        resultHash: `hash_${Date.now()}`, // Generate a result hash
+        storageUri: formData.file ? `ipfs://${formData.file.name}` : 'text://submission',
+        ...formData
+      }
+      
+      // Submit to backend
+      const submission = await createSubmission(submissionData)
+      
+      setIsSubmitting(false)
+      setIsSuccess(true)
+      
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setIsSuccess(false)
+        setStep(1)
+        setContributionType('')
+        setFormData({
+          title: '',
+          description: '',
+          dataType: '',
+          file: null,
+          tags: '',
+          license: ''
+        })
+        onClose()
+      }, 3000)
+    } catch (error) {
+      console.error('Submission failed:', error)
+      setIsSubmitting(false)
+      setLoginError(error.message)
+    }
   }
 
   const resetModal = () => {
@@ -169,6 +202,84 @@ export function DataDAOModal({ isOpen, onClose }) {
                 <Coins className="h-4 w-4 mr-1" />
                 Pending Reward
               </Badge>
+            </div>
+          ) : !isAuthenticated ? (
+            <div className="text-center py-8">
+              <div className="flex justify-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <Wallet className="h-8 w-8 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Wallet</h3>
+              <p className="text-gray-600 mb-6">
+                Connect your Web3 wallet to start contributing to our DataDAO and earn MAD tokens.
+              </p>
+              
+              {loginError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="text-sm text-red-800">
+                      <p className="font-medium">Connection Failed</p>
+                      <p>{loginError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <Button 
+                  onClick={() => handleWalletLogin('starknet')}
+                  disabled={isLoggingIn}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                >
+                  {isLoggingIn ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Connecting...
+                    </div>
+                  ) : (
+                    <>
+                      <Wallet className="mr-2 h-4 w-4" />
+                      Connect Starknet Wallet
+                    </>
+                  )}
+                </Button>
+
+                <Button 
+                  onClick={() => handleWalletLogin('lisk')}
+                  disabled={isLoggingIn}
+                  variant="outline"
+                  className="w-full border-2 border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50"
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  Connect Lisk Wallet
+                </Button>
+              </div>
+
+              <div className="mt-6 text-sm text-gray-500">
+                <p className="mb-2">Don't have a wallet?</p>
+                <div className="flex justify-center space-x-4">
+                  <a 
+                    href="https://www.xverse.app/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-700 flex items-center"
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Get Xverse
+                  </a>
+                  <a 
+                    href="https://lisk.com/desktop" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-purple-600 hover:text-purple-700 flex items-center"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Get Lisk Desktop
+                  </a>
+                </div>
+              </div>
             </div>
           ) : step === 1 ? (
             <div>

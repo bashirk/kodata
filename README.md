@@ -1,6 +1,6 @@
 # KoData - DataDAO Initiative Website
 
-A modern, responsive community website for KoData's DataDAO initiative, built with React, TypeScript, and Tailwind CSS.
+A modern, responsive community website for KoData's DataDAO initiative with full web3 backend integration, built with React, TypeScript, Tailwind CSS, and blockchain services.
 
 ## 🌟 Overview
 
@@ -10,7 +10,10 @@ KoData is a youth-focused data literacy and context engineering initiative that 
 
 ### Core Functionality
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Interactive DataDAO Modal**: Multi-step form for data contribution
+- **Web3 Integration**: Full blockchain backend with Starknet and Lisk support
+- **Wallet Authentication**: Connect Starknet (Xverse) and Lisk wallets
+- **Interactive DataDAO Modal**: Multi-step form for data contribution with real submissions
+- **Cross-Chain Reputation**: Earn reputation on Lisk for approved submissions
 - **Animated Statistics**: Eye-catching counters with intersection observer
 - **Contact Form**: Professional contact form with validation
 - **Smooth Navigation**: Scroll-to-section navigation with mobile menu
@@ -33,6 +36,7 @@ KoData is a youth-focused data literacy and context engineering initiative that 
 
 ## 🛠 Tech Stack
 
+### Frontend
 - **Framework**: React 18
 - **Language**: JavaScript (JSX)
 - **Styling**: Tailwind CSS
@@ -41,26 +45,58 @@ KoData is a youth-focused data literacy and context engineering initiative that 
 - **Build Tool**: Vite
 - **Package Manager**: pnpm
 
-## 📦 Installation
+### Backend
+- **Runtime**: Node.js 20+
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Cache**: Redis (BullMQ)
+- **Blockchain**: Starknet.js + Lisk SDK
+- **Authentication**: Wallet signature verification
 
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd kodata-website
-   ```
+## 📦 Quick Start
 
-2. **Install dependencies**:
-   ```bash
-   pnpm install
-   ```
+### Option 1: Docker (Recommended)
+```bash
+# Clone and setup
+git clone <repository-url>
+cd kodata-website
 
-3. **Start development server**:
-   ```bash
-   pnpm run dev
-   ```
+# Copy environment files
+cp backend/env.example backend/.env
+cp env.example .env.local
 
-4. **Open in browser**:
-   Navigate to `http://localhost:5173`
+# Edit backend/.env with your blockchain credentials
+# STARKNET_RPC_URL, STARKNET_ACCOUNT_ADDRESS, etc.
+
+# Start all services
+docker-compose up -d
+
+# Initialize database
+docker-compose exec backend pnpm run db:push
+
+# Access: Frontend http://localhost:5173, Backend http://localhost:3001
+```
+
+### Option 2: Local Development
+```bash
+# Clone repository
+git clone <repository-url>
+cd kodata-website
+
+# Run setup script (macOS/Linux)
+./setup-local.sh
+
+# Or run setup script (Windows)
+setup-local.bat
+
+# Start development servers
+# Terminal 1: cd backend && pnpm run dev
+# Terminal 2: pnpm run dev
+```
+
+### Manual Setup
+For detailed local setup instructions, see [LOCAL_SETUP.md](./LOCAL_SETUP.md)
 
 ## 🏗 Project Structure
 
@@ -68,8 +104,6 @@ KoData is a youth-focused data literacy and context engineering initiative that 
 kodata-website/
 ├── public/                 # Static assets
 ├── src/
-│   ├── assets/            # Images and media files
-│   │   └── hero-image.jpeg
 │   ├── components/        # Reusable components
 │   │   ├── ui/           # shadcn/ui components
 │   │   ├── Navigation.jsx
@@ -77,12 +111,35 @@ kodata-website/
 │   │   ├── FloatingActionButton.jsx
 │   │   ├── ContactForm.jsx
 │   │   └── DataDAOModal.jsx
+│   ├── contexts/         # React contexts
+│   │   └── AuthContext.jsx
+│   ├── lib/              # Utility libraries
+│   │   ├── apiService.js
+│   │   └── walletService.js
 │   ├── App.jsx           # Main application component
 │   ├── App.css           # Global styles
 │   └── main.jsx          # Application entry point
-├── index.html            # HTML template
-├── package.json          # Dependencies and scripts
-└── README.md            # Project documentation
+├── backend/              # Backend API server
+│   ├── src/
+│   │   ├── lib/         # Service libraries
+│   │   │   ├── authService.ts
+│   │   │   ├── liskService.ts
+│   │   │   ├── starknetService.ts
+│   │   │   └── relayer.ts
+│   │   └── index.ts     # Express server
+│   ├── prisma/          # Database schema
+│   │   └── schema.prisma
+│   └── package.json     # Backend dependencies
+├── docker-compose.yml    # Docker services
+├── Dockerfile.frontend   # Frontend Docker image
+├── Dockerfile.backend    # Backend Docker image
+├── setup-local.sh        # Local setup script (macOS/Linux)
+├── setup-local.bat       # Local setup script (Windows)
+├── LOCAL_SETUP.md        # Detailed local setup guide
+├── SETUP.md             # Docker setup guide
+├── index.html           # HTML template
+├── package.json         # Frontend dependencies
+└── README.md           # Project documentation
 ```
 
 ## 🎨 Components
@@ -114,8 +171,19 @@ kodata-website/
 
 ## 🌍 DataDAO Features
 
-The website showcases KoData's DataDAO (Decentralized Autonomous Organization) that rewards community members with MAD (ML, AI, Data) tokens for:
+The website showcases KoData's DataDAO (Decentralized Autonomous Organization) with full web3 integration:
 
+### Blockchain Integration
+- **Starknet**: Payment processing and task management
+- **Lisk**: Reputation system and governance
+- **Cross-Chain**: Automatic reputation updates via relayer
+
+### Wallet Support
+- **Starknet Wallets**: Xverse, Argent, Braavos
+- **Lisk Wallets**: Lisk Desktop, Web Wallet
+- **Authentication**: Signature-based login system
+
+### Reward System
 1. **Data Submission** (Up to 100 MAD tokens)
    - Upload new datasets
    - Support multiple data types
@@ -130,6 +198,13 @@ The website showcases KoData's DataDAO (Decentralized Autonomous Organization) t
    - Review submissions
    - Ensure high standards
    - Community moderation
+
+### API Endpoints
+- `POST /api/auth/challenge` - Get authentication challenge
+- `POST /api/auth/login` - Login with wallet signature
+- `POST /api/submissions` - Create data submission
+- `GET /api/submissions` - List user submissions
+- `POST /api/admin/approve-submission/:id` - Approve submission
 
 ## 🤝 Partnership Opportunities
 

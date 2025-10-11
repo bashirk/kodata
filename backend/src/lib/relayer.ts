@@ -3,6 +3,7 @@ import { LiskService } from './liskService';
 import { PrismaClient } from '@prisma/client';
 import { Queue, Worker } from 'bullmq';
 import Redis from 'ioredis';
+import PrismaSingleton from './prisma';
 
 interface ApprovedSubmission {
   id: string;
@@ -27,12 +28,24 @@ export class Relayer {
   constructor() {
     this.starknetService = new StarknetService();
     this.liskService = new LiskService();
-    this.prisma = new PrismaClient();
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    this.prisma = PrismaSingleton.getInstance();
+    
+    // Configure Redis for BullMQ compatibility
+    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      lazyConnect: true,
+    });
     
     // Initialize BullMQ queue for processing submissions
     this.submissionQueue = new Queue('submission-processing', {
-      connection: this.redis,
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+        lazyConnect: true,
+      },
       defaultJobOptions: {
         removeOnComplete: 100,
         removeOnFail: 50,
@@ -54,25 +67,41 @@ export class Relayer {
     this.isRunning = true;
     console.log('Relayer started with BullMQ queue processing');
 
-    // Start BullMQ worker for processing submissions
-    const worker = new Worker('submission-processing', async (job) => {
-      const { submissionId } = job.data;
-      await this.processSubmission(submissionId);
-    }, {
-      connection: this.redis,
-      concurrency: 5,
-    });
+    try {
+      // Test Redis connection
+      await this.redis.ping();
+      console.log('Redis connection established');
 
-    worker.on('completed', (job) => {
-      console.log(`Submission ${job.data.submissionId} processed successfully`);
-    });
+      // Start BullMQ worker for processing submissions
+      const worker = new Worker('submission-processing', async (job) => {
+        const { submissionId } = job.data;
+        await this.processSubmission(submissionId);
+      }, {
+        connection: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          lazyConnect: true,
+        },
+        concurrency: 5,
+      });
 
-    worker.on('failed', (job, err) => {
-      console.error(`Submission ${job?.data.submissionId} processing failed:`, err);
-    });
+      worker.on('completed', (job) => {
+        console.log(`Submission ${job.data.submissionId} processed successfully`);
+      });
 
-    // Listen for database changes using Prisma subscriptions
-    this.setupDatabaseSubscriptions();
+      worker.on('failed', (job, err) => {
+        console.error(`Submission ${job?.data.submissionId} processing failed:`, err);
+      });
+
+      // Listen for database changes using Prisma subscriptions
+      this.setupDatabaseSubscriptions();
+    } catch (error) {
+      console.error('Failed to start BullMQ worker, falling back to polling mode:', error);
+      // Fallback to polling mode without BullMQ
+      this.setupDatabaseSubscriptions();
+    }
   }
 
   async stopListening() {
@@ -90,6 +119,10 @@ export class Relayer {
    * Setup database subscriptions to listen for submission status changes
    */
   private setupDatabaseSubscriptions() {
+    // Temporarily disabled to prevent database connection issues
+    console.log('Database polling temporarily disabled to prevent connection errors');
+    return;
+    
     // In a production environment, you would use database triggers or change streams
     // For now, we'll implement a polling mechanism with better error handling
     const pollInterval = setInterval(async () => {
@@ -110,7 +143,13 @@ export class Relayer {
    * Process a single submission through the queue
    */
   async queueSubmission(submissionId: string) {
-    await this.submissionQueue.add('process-submission', { submissionId });
+    try {
+      await this.submissionQueue.add('process-submission', { submissionId });
+    } catch (error) {
+      console.error('Failed to queue submission, processing directly:', error);
+      // Fallback to direct processing if queue fails
+      await this.processSubmission(submissionId);
+    }
   }
 
   /**

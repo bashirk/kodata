@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
+import { useAuth } from './contexts/AuthContext'
 import { 
   Database, 
   Users, 
@@ -171,32 +172,68 @@ function App() {
     }
   }
 
-  const openDataDAOModal = () => {
-    setIsDataDAOModalOpen(true)
-  }
-
   const togglePartnerForm = () => {
     setShowPartnerForm(!showPartnerForm)
   }
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-white">
-         <Navigation />
+      <AppContent 
+        isLoaded={isLoaded}
+        isDataDAOModalOpen={isDataDAOModalOpen}
+        setIsDataDAOModalOpen={setIsDataDAOModalOpen}
+        showPartnerForm={showPartnerForm}
+        togglePartnerForm={togglePartnerForm}
+        partners={partners}
+        programs={programs}
+        testimonials={testimonials}
+        dataDAOFeatures={dataDAOFeatures}
+        scrollToSection={scrollToSection}
+      />
+    </AuthProvider>
+  )
+}
+
+// Separate component that uses AuthContext
+function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showPartnerForm, togglePartnerForm, partners, programs, testimonials, dataDAOFeatures, scrollToSection }) {
+  const { user, isAuthenticated } = useAuth()
+  
+  const openDataDAOModal = () => {
+    setIsDataDAOModalOpen(true)
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading KoData DAO...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Navigation />
        {/* Floating Action Button */}
        <button
          onClick={openDataDAOModal}
         className="group fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-700 hover:via-pink-700 hover:to-purple-700 text-white p-5 rounded-full shadow-2xl hover:shadow-purple-500/25 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 z-50 border-2 border-white/20 backdrop-blur-sm"
-         aria-label="Join DataDAO"
+         aria-label={isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO"}
        >
         <div className="relative">
-          <Zap className="h-6 w-6 group-hover:animate-pulse" />
+          {isAuthenticated ? (
+            <CheckCircle className="h-6 w-6 group-hover:animate-pulse" />
+          ) : (
+            <Zap className="h-6 w-6 group-hover:animate-pulse" />
+          )}
           {/* Pulsing ring effect */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-ping opacity-20"></div>
         </div>
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-          Join DataDAO
+          {isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO"}
           <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
         </div>
        </button>
@@ -706,13 +743,13 @@ function App() {
               </div>
             </div>
 
-                <Button 
+                  <Button 
                   size="lg" 
                     className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-700 hover:via-pink-700 hover:to-purple-700 text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
                   onClick={openDataDAOModal}
                 >
                     <Coins className="mr-2 h-5 w-5" />
-                  Join DataDAO Now
+                  {isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO Now"}
                 </Button>
                 </CardContent>
               </Card>
@@ -991,8 +1028,7 @@ function App() {
           </div>
         </div>
       </footer>
-      </div>
-    </AuthProvider>
+    </div>
   )
 }
 

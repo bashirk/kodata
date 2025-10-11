@@ -5,6 +5,7 @@ import { Relayer } from './lib/relayer';
 import { AuthService } from './lib/authService';
 import { StarknetService } from './lib/starknetService';
 import { LiskService } from './lib/liskService';
+import PrismaSingleton from './lib/prisma';
 
 // Extend Express Request interface to include user
 declare global {
@@ -16,7 +17,7 @@ declare global {
 }
 
 const app = express();
-const prisma = new PrismaClient();
+const prisma = PrismaSingleton.getInstance();
 const relayer = new Relayer();
 const authService = new AuthService();
 const starknetService = new StarknetService();
@@ -229,15 +230,16 @@ app.get('/api/blockchain/status', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
+let server: import('http').Server; // Define server variable to hold the instance
 
 async function startServer() {
   try {
     // Start the relayer
     await relayer.startListening();
     console.log('Relayer service started');
-    
-    // Start the server
-    app.listen(PORT, () => {
+
+    // Start the server and SAVE the instance
+    server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Health check: http://localhost:${PORT}/health`);
       console.log(`Ready check: http://localhost:${PORT}/ready`);
@@ -248,19 +250,25 @@ async function startServer() {
   }
 }
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  await relayer.stopListening();
-  await prisma.$disconnect();
-  process.exit(0);
-});
+// ✅ Corrected Graceful shutdown logic
+const shutdown = async () => {
+  console.log('Shutdown signal received, closing connections gracefully.');
+  
+  // 1. Stop the server from accepting new connections
+  server.close(async () => {
+    console.log('HTTP server closed.');
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
-  await relayer.stopListening();
-  await prisma.$disconnect();
-  process.exit(0);
-});
+    // 2. Close other services
+    await relayer.stopListening();
+    await PrismaSingleton.disconnect();
+    console.log('Prisma and Relayer disconnected.');
+    
+    // 3. Exit the process
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 startServer();

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Menu, X, ChevronDown, Zap, Shield, Network, ArrowRight } from 'lucide-react'
+import { Menu, X, ChevronDown, Zap, Shield, Network, ArrowRight, Wallet, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useAuth } from '../contexts/AuthContext'
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -15,6 +17,7 @@ import { cn } from '@/lib/utils'
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const { user, isAuthenticated, disconnectWallet } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,20 +80,43 @@ export function Navigation() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button 
-              className={`group relative rounded-full px-6 py-2 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
-                isScrolled
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
-                  : 'bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30'
-              }`}
-              onClick={() => scrollToSection('#datadao')}
-            >
-              <span className="flex items-center">
-                <Zap className="w-4 h-4 mr-2 group-hover:animate-pulse" />
-                Join DataDAO
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-              </span>
-            </Button>
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Connected
+                </Badge>
+                <Button 
+                  className={`group relative rounded-full px-6 py-2 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
+                    isScrolled
+                      ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white'
+                      : 'bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30'
+                  }`}
+                  onClick={() => scrollToSection('#datadao')}
+                >
+                  <span className="flex items-center">
+                    <Wallet className="w-4 h-4 mr-2 group-hover:animate-pulse" />
+                    Dashboard
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                  </span>
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                className={`group relative rounded-full px-6 py-2 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
+                  isScrolled
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+                    : 'bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30'
+                }`}
+                onClick={() => scrollToSection('#datadao')}
+              >
+                <span className="flex items-center">
+                  <Zap className="w-4 h-4 mr-2 group-hover:animate-pulse" />
+                  Join DataDAO
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                </span>
+              </Button>
+            )}
              
             {/* Mobile menu button */}
             <button

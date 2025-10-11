@@ -3,6 +3,7 @@ import { address } from '@liskhq/lisk-cryptography';
 import { RpcProvider, Account } from 'starknet';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import PrismaSingleton from './prisma';
 
 export interface AuthChallenge {
   nonce: string;
@@ -23,7 +24,7 @@ export class AuthService {
   private jwtSecret: string;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = PrismaSingleton.getInstance();
     this.starknetProvider = new RpcProvider({
       nodeUrl: process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io',
     });
@@ -64,13 +65,32 @@ export class AuthService {
         return false;
       }
       
-      if (!signature.signature.startsWith('0x') || signature.signature.length < 130) {
-        console.warn(`Invalid Starknet signature format: ${signature.signature}`);
+      // Handle different signature formats
+      let signatureString = '';
+      
+      if (typeof signature.signature === 'string') {
+        // Standard string format
+        signatureString = signature.signature;
+      } else if (signature.signature && typeof signature.signature === 'object') {
+        // Object format with r, s, recovery
+        if (signature.signature.r && signature.signature.s) {
+          signatureString = `${signature.signature.r}${signature.signature.s}`;
+        } else {
+          console.warn('Invalid signature object format:', signature.signature);
+          return false;
+        }
+      } else {
+        console.warn('Invalid signature format:', signature.signature);
         return false;
       }
       
-      // In production, you would verify the signature cryptographically
-      // For now, we'll do a basic format validation
+      if (!signatureString.startsWith('0x') || signatureString.length < 130) {
+        console.warn(`Invalid Starknet signature format: ${signatureString}`);
+        return false;
+      }
+      
+      // For development, we'll accept any properly formatted signature
+      // In production, you would implement proper cryptographic verification
       console.log(`Starknet signature verification passed for address: ${signature.address}`);
       return true;
     } catch (error) {

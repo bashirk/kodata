@@ -38,6 +38,8 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  // Removed automatic wallet connection polling to prevent unwanted disconnections
+
   const login = async (walletType) => {
     try {
       setIsLoading(true);
@@ -76,6 +78,37 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
   };
+
+  const disconnectWallet = async () => {
+    try {
+      // Clear authentication state
+      logout();
+      
+      // Try to disconnect from the actual wallet if available
+      if (typeof window !== 'undefined') {
+        // For Xverse wallet
+        if (window.xverseWallet && window.xverseWallet.disconnect) {
+          await window.xverseWallet.disconnect();
+        }
+        
+        // For other Starknet wallets
+        if (window.starknet && window.starknet.disconnect) {
+          await window.starknet.disconnect();
+        }
+        
+        // For Lisk wallets
+        if (window.lisk && window.lisk.disconnect) {
+          await window.lisk.disconnect();
+        }
+      }
+      
+      console.log('Wallet disconnected successfully');
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+      // Still clear local state even if wallet disconnect fails
+    }
+  };
+
 
   const createSubmission = async (submissionData) => {
     try {
@@ -123,6 +156,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     login,
     logout,
+    disconnectWallet,
     createSubmission,
     getSubmissions,
     approveSubmission,

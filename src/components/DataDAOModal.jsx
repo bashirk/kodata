@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -25,7 +25,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 
 export function DataDAOModal({ isOpen, onClose }) {
-  const { user, isAuthenticated, login, createSubmission, isLoading } = useAuth()
+  const { user, isAuthenticated, login, disconnectWallet, createSubmission, isLoading } = useAuth()
   const [step, setStep] = useState(1)
   const [contributionType, setContributionType] = useState('')
   const [formData, setFormData] = useState({
@@ -39,6 +39,14 @@ export function DataDAOModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [loginError, setLoginError] = useState('')
+
+  // Set initial step based on authentication state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setStep(isAuthenticated ? 0 : 1)
+      setLoginError('')
+    }
+  }, [isOpen, isAuthenticated])
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const contributionTypes = [
@@ -146,7 +154,8 @@ export function DataDAOModal({ isOpen, onClose }) {
   }
 
   const resetModal = () => {
-    setStep(1)
+    // Set initial step based on authentication state
+    setStep(isAuthenticated ? 0 : 1)
     setContributionType('')
     setFormData({
       title: '',
@@ -158,6 +167,7 @@ export function DataDAOModal({ isOpen, onClose }) {
     })
     setIsSuccess(false)
     setIsSubmitting(false)
+    setLoginError('')
   }
 
   const handleClose = () => {
@@ -173,17 +183,37 @@ export function DataDAOModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Join DataDAO</h2>
-            <p className="text-gray-600">Contribute to our data ecosystem and earn MAD tokens</p>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isAuthenticated ? 'DataDAO Dashboard' : 'Join DataDAO'}
+            </h2>
+            <p className="text-gray-600">
+              {isAuthenticated ? 
+                'Manage your contributions and track your rewards' : 
+                'Contribute to our data ecosystem and earn MAD tokens'
+              }
+            </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-6 w-6" />
-          </Button>
+          <div className="flex items-center space-x-2">
+            {isAuthenticated && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={disconnectWallet}
+                className="text-gray-600 hover:text-red-600 border-gray-300 hover:border-red-300"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Disconnect
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
 
         <div className="p-6">
@@ -280,6 +310,56 @@ export function DataDAOModal({ isOpen, onClose }) {
                   </a>
                 </div>
               </div>
+            </div>
+          ) : isAuthenticated && step === 0 ? (
+            <div className="text-center py-8">
+              <div className="flex justify-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Wallet Connected</h3>
+              <p className="text-gray-600 mb-4">
+                Welcome back! Your wallet is connected and ready to contribute.
+              </p>
+              
+              {/* Wallet Info */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <p className="text-sm text-gray-600">Connected Wallet</p>
+                    <p className="font-mono text-sm text-gray-900">
+                      {user?.starknetAddress ? 
+                        `${user.starknetAddress.slice(0, 6)}...${user.starknetAddress.slice(-4)}` : 
+                        'Unknown'
+                      }
+                    </p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Connected
+                  </Badge>
+                </div>
+              </div>
+
+            <div className="space-y-3">
+              <Button 
+                onClick={() => setStep(1)}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              >
+                <Database className="mr-2 h-4 w-4" />
+                Start Contributing
+              </Button>
+              
+              <Button 
+                onClick={disconnectWallet}
+                variant="outline"
+                className="w-full border-gray-300 text-gray-700 hover:border-red-300 hover:text-red-600"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Disconnect Wallet
+              </Button>
+            </div>
             </div>
           ) : step === 1 ? (
             <div>

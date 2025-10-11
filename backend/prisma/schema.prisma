@@ -21,6 +21,10 @@ model User {
   liskAddress    String?    // Lisk address (e.g., base32 format)
   btcAddress     String?
   reputation     Int       @default(0)
+  role           UserRole  @default(USER)
+  isAdmin        Boolean   @default(false)
+  adminApprovedBy String?  // ID of admin who approved this user
+  adminApprovedAt DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -64,4 +68,10 @@ enum SubmissionStatus {
   APPROVED
   REJECTED
   CHALLENGED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
 }

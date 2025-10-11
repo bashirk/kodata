@@ -211,6 +211,67 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Admin functions
+  const getAdminUsers = async () => {
+    try {
+      const result = await apiService.getAdminUsers();
+      return result;
+    } catch (error) {
+      console.error('Failed to get admin users:', error);
+      throw error;
+    }
+  };
+
+  const promoteUser = async (userId, role) => {
+    try {
+      const result = await apiService.promoteUser(userId, role);
+      return result;
+    } catch (error) {
+      console.error('Failed to promote user:', error);
+      throw error;
+    }
+  };
+
+  const demoteUser = async (userId) => {
+    try {
+      const result = await apiService.demoteUser(userId);
+      return result;
+    } catch (error) {
+      console.error('Failed to demote user:', error);
+      throw error;
+    }
+  };
+
+  const getRewardHistory = async (userId) => {
+    try {
+      const result = await apiService.getRewardHistory(userId);
+      return result;
+    } catch (error) {
+      console.error('Failed to get reward history:', error);
+      throw error;
+    }
+  };
+
+  const getRewardStats = async () => {
+    try {
+      const result = await apiService.getRewardStats();
+      return result;
+    } catch (error) {
+      console.error('Failed to get reward stats:', error);
+      throw error;
+    }
+  };
+
+  const createManualReward = async (to, amount, reason) => {
+    try {
+      const result = await apiService.createManualReward(to, amount, reason);
+      return result;
+    } catch (error) {
+      console.error('Failed to create manual reward:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     isLoading,
@@ -229,6 +290,13 @@ export const AuthProvider = ({ children }) => {
     stakeMADTokens,
     unstakeMADTokens,
     claimMADTokenRewards,
+    // Admin functions
+    getAdminUsers,
+    promoteUser,
+    demoteUser,
+    getRewardHistory,
+    getRewardStats,
+    createManualReward,
     walletService
   };
 

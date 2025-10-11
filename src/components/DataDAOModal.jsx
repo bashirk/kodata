@@ -20,9 +20,12 @@ import {
   BarChart,
   Wallet,
   ExternalLink,
-  Download
+  Download,
+  Shield
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { AdminDashboard } from './AdminDashboard'
+import { UserDashboard } from './UserDashboard'
 
 export function DataDAOModal({ isOpen, onClose }) {
   const { user, isAuthenticated, login, disconnectWallet, createSubmission, isLoading } = useAuth()
@@ -39,14 +42,21 @@ export function DataDAOModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [loginError, setLoginError] = useState('')
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false)
+  const [showUserDashboard, setShowUserDashboard] = useState(false)
 
   // Set initial step based on authentication state when modal opens
   useEffect(() => {
     if (isOpen) {
       setStep(isAuthenticated ? 0 : 1)
       setLoginError('')
+      setShowAdminDashboard(false)
+      setShowUserDashboard(false)
     }
   }, [isOpen, isAuthenticated])
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const contributionTypes = [
@@ -172,10 +182,22 @@ export function DataDAOModal({ isOpen, onClose }) {
 
   const handleClose = () => {
     resetModal()
+    setShowAdminDashboard(false)
+    setShowUserDashboard(false)
     onClose()
   }
 
   if (!isOpen) return null
+
+  // Show admin dashboard if requested
+  if (showAdminDashboard) {
+    return <AdminDashboard isOpen={true} onClose={() => setShowAdminDashboard(false)} />
+  }
+
+  // Show user dashboard if requested
+  if (showUserDashboard) {
+    return <UserDashboard isOpen={true} onClose={() => setShowUserDashboard(false)} />
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -350,6 +372,24 @@ export function DataDAOModal({ isOpen, onClose }) {
                 <Database className="mr-2 h-4 w-4" />
                 Start Contributing
               </Button>
+              
+              <Button 
+                onClick={() => setShowUserDashboard(true)}
+                className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+              >
+                <Award className="mr-2 h-4 w-4" />
+                My Dashboard
+              </Button>
+              
+              {isAdmin && (
+                <Button 
+                  onClick={() => setShowAdminDashboard(true)}
+                  className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white"
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin Dashboard
+                </Button>
+              )}
               
               <Button 
                 onClick={disconnectWallet}

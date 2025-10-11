@@ -137,6 +137,40 @@ class ApiService {
     });
   }
 
+  // Admin user management endpoints
+  async getAdminUsers() {
+    return this.request('/api/admin/users');
+  }
+
+  async promoteUser(userId, role) {
+    return this.request(`/api/admin/users/${userId}/promote`, {
+      method: 'POST',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async demoteUser(userId) {
+    return this.request(`/api/admin/users/${userId}/demote`, {
+      method: 'POST',
+    });
+  }
+
+  // Reward endpoints
+  async getRewardHistory(userId) {
+    return this.request(`/api/rewards/history/${userId}`);
+  }
+
+  async getRewardStats() {
+    return this.request('/api/rewards/stats');
+  }
+
+  async createManualReward(to, amount, reason) {
+    return this.request('/api/admin/rewards/manual', {
+      method: 'POST',
+      body: JSON.stringify({ to, amount, reason }),
+    });
+  }
+
   // Blockchain status
   async getBlockchainStatus() {
     return this.request('/api/blockchain/status');

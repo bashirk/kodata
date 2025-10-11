@@ -479,6 +479,235 @@ app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
   }
 });
 
+// Admin delegation endpoints
+app.get('/api/admin/users', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    // Get all users with their submission counts
+    const users = await prisma.user.findMany({
+      include: {
+        _count: {
+          select: {
+            submissions: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    return res.json({ users });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get users' });
+  }
+});
+
+app.post('/api/admin/users/:userId/promote', authenticateToken, async (req, res) => {
+  try {
+    // Check if current user is admin
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const { userId } = req.params;
+    const { role } = req.body;
+    
+    if (!['ADMIN', 'MODERATOR'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role. Must be ADMIN or MODERATOR' });
+    }
+    
+    // Update user role
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        role: role as any,
+        isAdmin: role === 'ADMIN',
+        adminApprovedBy: req.user.id,
+        adminApprovedAt: new Date()
+      } as any
+    });
+    
+    console.log(`✅ User ${userId} promoted to ${role} by admin ${req.user.id}`);
+    
+    return res.json({
+      user: updatedUser,
+      message: `User promoted to ${role} successfully`
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to promote user' });
+  }
+});
+
+app.post('/api/admin/users/:userId/demote', authenticateToken, async (req, res) => {
+  try {
+    // Check if current user is admin
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const { userId } = req.params;
+    
+    // Prevent self-demotion
+    if (userId === req.user.id) {
+      return res.status(400).json({ error: 'Cannot demote yourself' });
+    }
+    
+    // Update user role to USER
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        role: 'USER' as any,
+        isAdmin: false,
+        adminApprovedBy: null,
+        adminApprovedAt: null
+      } as any
+    });
+    
+    console.log(`✅ User ${userId} demoted to USER by admin ${req.user.id}`);
+    
+    return res.json({
+      user: updatedUser,
+      message: 'User demoted successfully'
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to demote user' });
+  }
+});
+
+// Admin rewards for approving submissions
+app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const submission = await prisma.submission.findUnique({
+      where: { id: req.params.id },
+      include: { user: true }
+    });
+    
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    
+    if (submission.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Submission is not in pending status' });
+    }
+    
+    // Approve on Starknet
+    const starknetTxHash = await starknetService.approveSubmission(submission.id);
+    
+    // Calculate rewards
+    const submitterReward = 100; // Base reward: 100 MAD tokens
+    const adminReward = 25; // Admin reward: 25 MAD tokens for approving
+    
+    // Mint tokens to submitter
+    let submitterTxHash = null;
+    let submitterError = null;
+    try {
+      if (submission.user.starknetAddress) {
+        console.log(`Minting ${submitterReward} MAD tokens to ${submission.user.starknetAddress} for approved submission ${submission.id}`);
+        
+        try {
+          submitterTxHash = await madTokenService.mintTokens(
+            submission.user.starknetAddress, 
+            submitterReward.toString(), 
+            `approval_reward_submission_${submission.id}`
+          );
+          console.log(`✅ Submitter tokens minted successfully: ${submitterTxHash}`);
+        } catch (mintError) {
+          console.warn('⚠️ Submitter token minting failed:', mintError instanceof Error ? mintError.message : String(mintError));
+          submitterError = 'Token minting failed: ' + (mintError instanceof Error ? mintError.message : String(mintError));
+        }
+      } else {
+        submitterError = 'User has no Starknet address for token rewards';
+      }
+    } catch (error) {
+      console.error('❌ Submitter token reward error:', error);
+      submitterError = error instanceof Error ? error.message : 'Unknown reward error';
+    }
+    
+    // Mint tokens to admin
+    let adminTxHash = null;
+    let adminError = null;
+    try {
+      if (currentUser.starknetAddress) {
+        console.log(`Minting ${adminReward} MAD tokens to admin ${currentUser.starknetAddress} for approving submission ${submission.id}`);
+        
+        try {
+          adminTxHash = await madTokenService.mintTokens(
+            currentUser.starknetAddress, 
+            adminReward.toString(), 
+            `admin_approval_reward_submission_${submission.id}`
+          );
+          console.log(`✅ Admin tokens minted successfully: ${adminTxHash}`);
+        } catch (mintError) {
+          console.warn('⚠️ Admin token minting failed:', mintError instanceof Error ? mintError.message : String(mintError));
+          adminError = 'Token minting failed: ' + (mintError instanceof Error ? mintError.message : String(mintError));
+        }
+      } else {
+        adminError = 'Admin has no Starknet address for token rewards';
+      }
+    } catch (error) {
+      console.error('❌ Admin token reward error:', error);
+      adminError = error instanceof Error ? error.message : 'Unknown reward error';
+    }
+    
+    // Update submission status with reward information
+    const updatedSubmission = await prisma.submission.update({
+      where: { id: submission.id },
+      data: { 
+        status: 'APPROVED',
+        qualityScore: 85, // Quality score based on review
+        rewardAmount: submitterReward.toString(),
+        rewardTxHash: submitterTxHash,
+        rewardError: submitterError
+      }
+    });
+    
+    // Queue submission for Lisk reputation processing
+    await relayer.queueSubmission(submission.id);
+    
+    return res.json({ 
+      submission: updatedSubmission,
+      starknetTxHash,
+      submitterReward: {
+        amount: submitterReward.toString(),
+        txHash: submitterTxHash,
+        error: submitterError
+      },
+      adminReward: {
+        amount: adminReward.toString(),
+        txHash: adminTxHash,
+        error: adminError
+      },
+      message: 'Submission approved, rewards distributed to submitter and admin'
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to approve submission' });
+  }
+});
+
 // Blockchain status endpoints
 app.get('/api/blockchain/status', async (req, res) => {
   try {

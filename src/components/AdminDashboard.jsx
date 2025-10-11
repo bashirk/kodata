@@ -352,7 +352,7 @@ export function AdminDashboard({ isOpen, onClose }) {
                             <div className="flex-1">
                               <div className="flex items-center space-x-3 mb-2">
                                 <h3 className="font-semibold text-gray-900">
-                                  Submission #{submission.id.slice(-8)}
+                                  {submission.metadata?.title || `Submission #${submission.id.slice(-8)}`}
                                 </h3>
                                 {getStatusBadge(submission.status)}
                                 {submission.rewardAmount && (
@@ -361,12 +361,25 @@ export function AdminDashboard({ isOpen, onClose }) {
                                     {submission.rewardAmount} MAD
                                   </Badge>
                                 )}
+                                {submission.metadata?.contributionType && (
+                                  <Badge className="bg-blue-100 text-blue-800">
+                                    {submission.metadata.contributionType}
+                                  </Badge>
+                                )}
                               </div>
+                              
+                              {submission.metadata?.description && (
+                                <div className="mb-3">
+                                  <p className="text-sm text-gray-600 mb-1">
+                                    <span className="font-medium">Description:</span> {submission.metadata.description}
+                                  </p>
+                                </div>
+                              )}
                               
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
                                 <div>
-                                  <p className="font-medium">Task ID</p>
-                                  <p className="font-mono">{submission.taskId}</p>
+                                  <p className="font-medium">Data Type</p>
+                                  <p>{submission.metadata?.dataType || 'text'}</p>
                                 </div>
                                 <div>
                                   <p className="font-medium">Submitter</p>
@@ -377,6 +390,14 @@ export function AdminDashboard({ isOpen, onClose }) {
                                   <p>{new Date(submission.createdAt).toLocaleDateString()}</p>
                                 </div>
                               </div>
+                              
+                              {submission.metadata?.tags && submission.metadata.tags.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-sm text-gray-600 mb-1">
+                                    <span className="font-medium">Tags:</span> {submission.metadata.tags.join(', ')}
+                                  </p>
+                                </div>
+                              )}
 
                               {submission.rewardTxHash && (
                                 <div className="text-sm text-gray-600 mb-3">

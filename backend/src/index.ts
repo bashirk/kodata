@@ -7,6 +7,7 @@ import { AuthService } from './lib/authService';
 import { StarknetService } from './lib/starknetService';
 import { LiskService } from './lib/liskService';
 import { MADTokenService } from './lib/madTokenService';
+import { DataCurationService } from './lib/dataCurationService';
 import PrismaSingleton from './lib/prisma';
 
 // Extend Express Request interface to include user
@@ -25,6 +26,7 @@ const authService = new AuthService();
 const starknetService = new StarknetService();
 const liskService = new LiskService();
 const madTokenService = new MADTokenService();
+const dataCurationService = new DataCurationService();
 
 // Middleware
 app.use(cors({
@@ -122,31 +124,131 @@ app.get('/api/users/profile', authenticateToken, async (req, res) => {
 // Submission endpoints
 app.post('/api/submissions', authenticateToken, async (req, res) => {
   try {
-    const { taskId, resultHash, storageUri } = req.body;
+    const { 
+      taskId, 
+      resultHash, 
+      storageUri, 
+      title, 
+      description, 
+      dataType, 
+      tags, 
+      license,
+      contributionType,
+      file
+    } = req.body;
     
+    console.log('📝 Creating submission with data:', {
+      taskId,
+      title,
+      description,
+      dataType,
+      contributionType,
+      userId: req.user.id
+    });
+    
+    // Validate required fields
+    if (!title || !description) {
+      res.status(400).json({ error: 'Title and description are required' });
+      return;
+    }
+    
+    // Create submission with proper data curation fields
     const submission = await prisma.submission.create({
       data: {
-        taskId,
+        taskId: taskId || `task_${Date.now()}`,
         userId: req.user.id,
-        resultHash,
-        storageUri,
-        status: 'PENDING'
+        resultHash: resultHash || `hash_${Date.now()}`,
+        storageUri: storageUri || 'text://submission',
+        status: 'PENDING',
+        // Add metadata for data curation
+        metadata: {
+          title,
+          description,
+          dataType: dataType || 'text',
+          contributionType: contributionType || 'submit',
+          tags: tags ? tags.split(',').map((t: string) => t.trim()) : [],
+          license: license || 'CC0',
+          submittedAt: new Date().toISOString(),
+          fileInfo: file ? {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          } : null
+        }
       }
     });
     
-    res.json(submission);
+    console.log(`✅ Submission created successfully: ${submission.id} by user ${req.user.id}`);
+    console.log(`📊 Submission details:`, {
+      id: submission.id,
+      title,
+      dataType,
+      contributionType,
+      status: submission.status
+    });
+    
+    // Process submission through data curation service
+    try {
+      const curationResult = await dataCurationService.processSubmission(submission.id);
+      console.log(`🔍 Data curation completed:`, {
+        submissionId: submission.id,
+        qualityScore: curationResult.qualityScore,
+        valid: curationResult.valid,
+        issuesCount: curationResult.issues.length
+      });
+      
+      // Update submission with curation results
+      const updatedSubmission = await prisma.submission.findUnique({
+        where: { id: submission.id }
+      });
+      
+      res.json({
+        submission: updatedSubmission,
+        curation: curationResult,
+        message: 'Submission created successfully and processed through data curation'
+      });
+    } catch (curationError) {
+      console.error('❌ Data curation failed:', curationError);
+      res.json({
+        submission,
+        curation: null,
+        message: 'Submission created successfully but data curation failed'
+      });
+    }
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create submission' });
+    console.error('❌ Failed to create submission:', error);
+    res.status(500).json({ 
+      error: 'Failed to create submission',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
 app.get('/api/submissions', authenticateToken, async (req, res) => {
   try {
+    // Check if user is admin - if so, return ALL submissions
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    const isAdmin = currentUser && ((currentUser as any).isAdmin || (currentUser as any).role === 'ADMIN');
+    
     const submissions = await prisma.submission.findMany({
-      where: { userId: req.user.id },
+      where: isAdmin ? {} : { userId: req.user.id }, // Admin sees all, users see only their own
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            starknetAddress: true,
+            liskAddress: true
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(submissions);
+    
+    res.json({ submissions, isAdmin });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch submissions' });
   }
@@ -443,6 +545,44 @@ app.get('/api/rewards/stats', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get reward stats' });
+  }
+});
+
+// Data curation endpoints
+app.get('/api/curation/stats', authenticateToken, async (req, res) => {
+  try {
+    const stats = await dataCurationService.getCurationStats();
+    return res.json(stats);
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get curation stats' });
+  }
+});
+
+app.post('/api/curation/process/:submissionId', authenticateToken, async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    const result = await dataCurationService.processSubmission(submissionId);
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process submission' });
+  }
+});
+
+app.post('/api/curation/auto-approve', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const result = await dataCurationService.autoApproveHighQuality();
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to auto-approve submissions' });
   }
 });
 

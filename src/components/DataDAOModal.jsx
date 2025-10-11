@@ -132,8 +132,11 @@ export function DataDAOModal({ isOpen, onClose }) {
         taskId: `task_${Date.now()}`, // Generate a task ID
         resultHash: `hash_${Date.now()}`, // Generate a result hash
         storageUri: formData.file ? `ipfs://${formData.file.name}` : 'text://submission',
+        contributionType: contributionType, // Add contribution type
         ...formData
       }
+      
+      console.log('📤 Sending submission data:', submissionData)
       
       // Submit to backend
       const submission = await createSubmission(submissionData)

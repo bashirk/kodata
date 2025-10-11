@@ -150,6 +150,67 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // MAD Token functions
+  const getMADTokenInfo = async () => {
+    try {
+      const info = await apiService.getMADTokenInfo();
+      return info;
+    } catch (error) {
+      console.error('Failed to get MAD token info:', error);
+      throw error;
+    }
+  };
+
+  const getMADTokenBalance = async (address) => {
+    try {
+      const balance = await apiService.getMADTokenBalance(address);
+      return balance;
+    } catch (error) {
+      console.error('Failed to get MAD token balance:', error);
+      throw error;
+    }
+  };
+
+  const getMADTokenStaking = async (address) => {
+    try {
+      const staking = await apiService.getMADTokenStaking(address);
+      return staking;
+    } catch (error) {
+      console.error('Failed to get MAD token staking info:', error);
+      throw error;
+    }
+  };
+
+  const stakeMADTokens = async (amount) => {
+    try {
+      const result = await apiService.stakeMADTokens(amount);
+      return result;
+    } catch (error) {
+      console.error('Failed to stake MAD tokens:', error);
+      throw error;
+    }
+  };
+
+  const unstakeMADTokens = async (amount) => {
+    try {
+      const result = await apiService.unstakeMADTokens(amount);
+      return result;
+    } catch (error) {
+      console.error('Failed to unstake MAD tokens:', error);
+      throw error;
+    }
+  };
+
+  const claimMADTokenRewards = async () => {
+    try {
+      const result = await apiService.claimMADTokenRewards();
+      return result;
+    } catch (error) {
+      console.error('Failed to claim MAD token rewards:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     isLoading,
@@ -161,6 +222,13 @@ export const AuthProvider = ({ children }) => {
     getSubmissions,
     approveSubmission,
     getBlockchainStatus,
+    // MAD Token functions
+    getMADTokenInfo,
+    getMADTokenBalance,
+    getMADTokenStaking,
+    stakeMADTokens,
+    unstakeMADTokens,
+    claimMADTokenRewards,
     walletService
   };
 

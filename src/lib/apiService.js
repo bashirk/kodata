@@ -89,6 +89,54 @@ class ApiService {
     });
   }
 
+  // MAD Token endpoints
+  async getMADTokenInfo() {
+    return this.request('/api/mad-token/info');
+  }
+
+  async getMADTokenBalance(address) {
+    return this.request(`/api/mad-token/balance/${address}`);
+  }
+
+  async getMADTokenStaking(address) {
+    return this.request(`/api/mad-token/staking/${address}`);
+  }
+
+  async stakeMADTokens(amount) {
+    return this.request('/api/mad-token/stake', {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    });
+  }
+
+  async unstakeMADTokens(amount) {
+    return this.request('/api/mad-token/unstake', {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    });
+  }
+
+  async claimMADTokenRewards() {
+    return this.request('/api/mad-token/claim-rewards', {
+      method: 'POST',
+    });
+  }
+
+  // Admin MAD Token endpoints
+  async mintMADTokens(to, amount, reason) {
+    return this.request('/api/admin/mad-token/mint', {
+      method: 'POST',
+      body: JSON.stringify({ to, amount, reason }),
+    });
+  }
+
+  async transferMADTokens(to, amount) {
+    return this.request('/api/admin/mad-token/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ to, amount }),
+    });
+  }
+
   // Blockchain status
   async getBlockchainStatus() {
     return this.request('/api/blockchain/status');

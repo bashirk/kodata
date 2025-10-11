@@ -98,6 +98,47 @@ export class StarknetService {
   }
 
   /**
+   * Get contract information from the deployed WorkProof contract
+   * 
+   * @returns Promise<{name: string, version: string, admin: string, submissionCount: string}>
+   * @throws Error if contract is not accessible
+   */
+  async getContractInfo() {
+    try {
+      if (!this.isInitialized || !this.account) {
+        throw new Error('Starknet service not properly initialized');
+      }
+      
+      if (!this.contract) {
+        await this.loadContract();
+      }
+      
+      if (!this.contract) {
+        throw new Error('Failed to load Starknet contract');
+      }
+      
+      // Call contract info methods using invoke for external functions
+      const contractInfoResult = await this.contract.invoke('get_contract_info', []);
+      const admin = await this.contract.invoke('get_admin', []);
+      const submissionCount = await this.contract.invoke('get_submission_count', []);
+      
+      // Parse the contract info result (it's a tuple)
+      const name = contractInfoResult[0];
+      const version = contractInfoResult[1];
+      
+      return {
+        name: name.toString(),
+        version: version.toString(),
+        admin: admin.toString(),
+        submissionCount: submissionCount.toString()
+      };
+    } catch (error) {
+      console.error('StarknetService getContractInfo error:', error);
+      throw new Error(`Failed to get contract info: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
    * Load the WorkProof contract from the deployed address
    * 
    * This method loads the contract ABI and connects it to the deployed contract
@@ -121,85 +162,13 @@ export class StarknetService {
         throw new Error('STARKNET_CONTRACT_ADDRESS environment variable not set');
       }
       
-      // Contract ABI for WorkProof contract
-      // This ABI matches the deployed contract interface from lib.cairo
-      const contractAbi = json.parse(`[
-        {
-          "name": "add_admin",
-          "type": "function",
-          "inputs": [{ "name": "new_admin", "type": "ContractAddress" }],
-          "outputs": []
-        },
-        {
-          "name": "remove_admin",
-          "type": "function",
-          "inputs": [{ "name": "admin_to_remove", "type": "ContractAddress" }],
-          "outputs": []
-        },
-        {
-          "name": "create_submission",
-          "type": "function",
-          "inputs": [
-            { "name": "task_id", "type": "felt252" },
-            { "name": "result_hash", "type": "felt252" },
-            { "name": "storage_uri", "type": "felt252" }
-          ],
-          "outputs": [{ "name": "submission_id", "type": "felt252" }]
-        },
-        {
-          "name": "approve_submission",
-          "type": "function",
-          "inputs": [{ "name": "submission_id", "type": "felt252" }],
-          "outputs": []
-        },
-        {
-          "name": "reject_submission",
-          "type": "function",
-          "inputs": [{ "name": "submission_id", "type": "felt252" }],
-          "outputs": []
-        },
-        {
-          "name": "is_submission_approved",
-          "type": "function",
-          "inputs": [{ "name": "submission_id", "type": "felt252" }],
-          "outputs": [{ "name": "approved", "type": "bool" }]
-        },
-        {
-          "name": "get_user_reputation",
-          "type": "function",
-          "inputs": [{ "name": "user_address", "type": "ContractAddress" }],
-          "outputs": [{ "name": "reputation", "type": "u256" }]
-        },
-        {
-          "name": "is_admin",
-          "type": "function",
-          "inputs": [{ "name": "address", "type": "ContractAddress" }],
-          "outputs": [{ "name": "admin", "type": "bool" }]
-        },
-        {
-          "name": "get_admin",
-          "type": "function",
-          "inputs": [],
-          "outputs": [{ "name": "admin", "type": "ContractAddress" }]
-        },
-        {
-          "name": "get_submission_count",
-          "type": "function",
-          "inputs": [],
-          "outputs": [{ "name": "count", "type": "u256" }]
-        },
-        {
-          "name": "get_contract_info",
-          "type": "function",
-          "inputs": [],
-          "outputs": [
-            { "name": "name", "type": "felt252" },
-            { "name": "version", "type": "felt252" }
-          ]
-        }
-      ]`);
+      // Load the actual contract class from the deployed contract
+      const fs = require('fs');
+      const path = require('path');
+      const contractAbiPath = path.join(__dirname, '../../contract-abi.json');
+      const contractClass = json.parse(fs.readFileSync(contractAbiPath, 'utf8'));
       
-      this.contract = new Contract(contractAbi, contractAddress, this.account);
+      this.contract = new Contract(contractClass.abi, contractAddress, this.account);
       console.log('Starknet WorkProof contract loaded at:', contractAddress);
     } catch (error) {
       console.error('StarknetService loadContract error:', error);

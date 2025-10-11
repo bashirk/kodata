@@ -10,6 +10,9 @@ use starknet::storage::StorageMapWrite;
 use starknet::storage::StorageRead;
 use starknet::storage::StorageWrite;
 
+// Import MAD token interface
+use starknet::interface::IMADTokenDispatcher;
+
 // Storage structure
 #[storage]
 struct Storage {
@@ -23,6 +26,11 @@ struct Storage {
     
     // User reputation
     user_reputation: Map<ContractAddress, u256>,
+    
+    // MAD token integration
+    mad_token_contract: ContractAddress,
+    submission_reward_amount: u256,
+    approval_reward_amount: u256,
     
     // Contract metadata
     contract_name: felt252,
@@ -107,13 +115,19 @@ struct ReputationUpdated {
 #[constructor]
 fn constructor(
     ref syscall_ptr: *mut syscall::SyscallPtr,
-    admin: ContractAddress
+    admin: ContractAddress,
+    mad_token_contract: ContractAddress
 ) {
     let storage = storage::StorageTrait::new(syscall_ptr);
     
     // Set initial admin
     storage::write(storage.admin, admin);
     storage::write(storage.is_admin, admin, true);
+    
+    // Set MAD token contract and reward amounts
+    storage::write(storage.mad_token_contract, mad_token_contract);
+    storage::write(storage.submission_reward_amount, 1000000000000000000); // 1 MAD token (18 decimals)
+    storage::write(storage.approval_reward_amount, 500000000000000000); // 0.5 MAD token
     
     // Set contract metadata
     storage::write(storage.contract_name, 'WorkProof');
@@ -223,6 +237,18 @@ impl WorkProofImpl of IWorkProof<ContractState> {
         let new_reputation = current_reputation + 10; // Award 10 reputation points
         storage::write(storage.user_reputation, user_address, new_reputation);
         
+        // Distribute MAD token rewards
+        let mad_token_contract = storage::read(storage.mad_token_contract);
+        let submission_reward = storage::read(storage.submission_reward_amount);
+        let approval_reward = storage::read(storage.approval_reward_amount);
+        
+        // Distribute reward to submitter
+        let mad_token_dispatcher = IMADTokenDispatcher { contract_address: mad_token_contract };
+        mad_token_dispatcher.distribute_submission_reward(user_address, submission_reward, submission_id);
+        
+        // Distribute reward to approver
+        mad_token_dispatcher.distribute_approval_reward(caller, approval_reward, submission_id);
+        
         // Emit events
         self.emit(SubmissionApproved {
             submission_id,
@@ -301,6 +327,46 @@ impl WorkProofImpl of IWorkProof<ContractState> {
         let version = storage::read(storage.contract_version);
         (name, version)
     }
+    
+    // MAD token integration functions
+    fn set_mad_token_contract(ref self: ContractState, mad_token_contract: ContractAddress) {
+        let caller = get_caller_address();
+        self._assert_admin(caller);
+        
+        let storage = self.0;
+        storage::write(storage.mad_token_contract, mad_token_contract);
+    }
+    
+    fn set_submission_reward_amount(ref self: ContractState, amount: u256) {
+        let caller = get_caller_address();
+        self._assert_admin(caller);
+        
+        let storage = self.0;
+        storage::write(storage.submission_reward_amount, amount);
+    }
+    
+    fn set_approval_reward_amount(ref self: ContractState, amount: u256) {
+        let caller = get_caller_address();
+        self._assert_admin(caller);
+        
+        let storage = self.0;
+        storage::write(storage.approval_reward_amount, amount);
+    }
+    
+    fn get_mad_token_contract(ref self: ContractState) -> ContractAddress {
+        let storage = self.0;
+        storage::read(storage.mad_token_contract)
+    }
+    
+    fn get_submission_reward_amount(ref self: ContractState) -> u256 {
+        let storage = self.0;
+        storage::read(storage.submission_reward_amount)
+    }
+    
+    fn get_approval_reward_amount(ref self: ContractState) -> u256 {
+        let storage = self.0;
+        storage::read(storage.approval_reward_amount)
+    }
 }
 
 // Internal helper functions
@@ -338,4 +404,12 @@ trait IWorkProof<TContractState> {
     fn get_admin(ref self: TContractState) -> ContractAddress;
     fn get_submission_count(ref self: TContractState) -> u256;
     fn get_contract_info(ref self: TContractState) -> (felt252, felt252);
+    
+    // MAD token integration functions
+    fn set_mad_token_contract(ref self: TContractState, mad_token_contract: ContractAddress);
+    fn set_submission_reward_amount(ref self: TContractState, amount: u256);
+    fn set_approval_reward_amount(ref self: TContractState, amount: u256);
+    fn get_mad_token_contract(ref self: TContractState) -> ContractAddress;
+    fn get_submission_reward_amount(ref self: TContractState) -> u256;
+    fn get_approval_reward_amount(ref self: TContractState) -> u256;
 }

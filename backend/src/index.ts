@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import { execSync } from 'child_process';
 import { Relayer } from './lib/relayer';
 import { AuthService } from './lib/authService';
 import { StarknetService } from './lib/starknetService';
 import { LiskService } from './lib/liskService';
+import { MADTokenService } from './lib/madTokenService';
 import PrismaSingleton from './lib/prisma';
 
 // Extend Express Request interface to include user
@@ -22,6 +24,7 @@ const relayer = new Relayer();
 const authService = new AuthService();
 const starknetService = new StarknetService();
 const liskService = new LiskService();
+const madTokenService = new MADTokenService();
 
 // Middleware
 app.use(cors({
@@ -211,21 +214,242 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
   }
 });
 
+// MAD Token endpoints
+app.get('/api/mad-token/info', async (req, res) => {
+  try {
+    const contractAddress = process.env.MAD_TOKEN_CONTRACT_ADDRESS;
+    
+    if (!contractAddress) {
+      return res.status(500).json({ error: 'MAD_TOKEN_CONTRACT_ADDRESS not set' });
+    }
+    
+    const tokenInfoCmd = `starkli call ${contractAddress} get_mad_token_info --network sepolia`;
+    const tokenInfoOutput = execSync(tokenInfoCmd, { encoding: 'utf8', stdio: 'pipe' });
+    const tokenInfo = JSON.parse(tokenInfoOutput);
+    
+    // Decode token info
+    const name = Buffer.from(tokenInfo[0].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
+    const symbol = Buffer.from(tokenInfo[1].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
+    const decimals = parseInt(tokenInfo[2], 16);
+    const totalSupply = BigInt(tokenInfo[3]).toString();
+    
+    res.json({
+      name,
+      symbol,
+      decimals,
+      totalSupply
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get MAD token info' });
+  }
+});
+
+app.get('/api/mad-token/balance/:address', async (req, res) => {
+  try {
+    const contractAddress = process.env.MAD_TOKEN_CONTRACT_ADDRESS;
+    
+    if (!contractAddress) {
+      return res.status(500).json({ error: 'MAD_TOKEN_CONTRACT_ADDRESS not set' });
+    }
+    
+    const balanceCmd = `starkli call ${contractAddress} get_mad_token_balance --network sepolia ${req.params.address}`;
+    const balanceOutput = execSync(balanceCmd, { encoding: 'utf8', stdio: 'pipe' });
+    const balance = JSON.parse(balanceOutput);
+    
+    res.json({ 
+      address: req.params.address, 
+      balance: balance[0] 
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get MAD token balance' });
+  }
+});
+
+app.get('/api/mad-token/staking/:address', async (req, res) => {
+  try {
+    const stakingInfo = await madTokenService.getStakingInfo(req.params.address);
+    res.json({ address: req.params.address, ...stakingInfo });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get staking info' });
+  }
+});
+
+app.post('/api/mad-token/stake', authenticateToken, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const userAddress = req.user.starknetAddress;
+    
+    if (!userAddress) {
+      return res.status(400).json({ error: 'User has no Starknet address' });
+    }
+    
+    const txHash = await madTokenService.stakeTokens(amount, 30); // 30 days duration
+    return res.json({ txHash, message: 'Staking transaction submitted' });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to stake tokens' });
+  }
+});
+
+app.post('/api/mad-token/unstake', authenticateToken, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const userAddress = req.user.starknetAddress;
+    
+    if (!userAddress) {
+      return res.status(400).json({ error: 'User has no Starknet address' });
+    }
+    
+    const txHash = await madTokenService.unstakeTokens(amount);
+    return res.json({ txHash, message: 'Unstaking transaction submitted' });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to unstake tokens' });
+  }
+});
+
+app.post('/api/mad-token/claim-rewards', authenticateToken, async (req, res) => {
+  try {
+    const txHash = await madTokenService.claimStakingRewards();
+    res.json({ txHash, message: 'Reward claim transaction submitted' });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to claim rewards' });
+  }
+});
+
+// Admin MAD Token endpoints
+app.post('/api/admin/mad-token/mint', authenticateToken, async (req, res) => {
+  try {
+    const { to, amount, reason } = req.body;
+    const txHash = await madTokenService.mintTokens(to, amount, reason);
+    res.json({ txHash, message: 'Mint transaction submitted' });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to mint tokens' });
+  }
+});
+
+app.post('/api/admin/mad-token/transfer', authenticateToken, async (req, res) => {
+  try {
+    const { to, amount } = req.body;
+    const txHash = await madTokenService.transferTokens(to, amount);
+    res.json({ txHash, message: 'Transfer transaction submitted' });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to transfer tokens' });
+  }
+});
+
 // Blockchain status endpoints
 app.get('/api/blockchain/status', async (req, res) => {
   try {
-    res.json({
+    const status = {
       starknet: {
-        connected: true,
-        rpcUrl: process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io'
+        connected: false,
+        rpcUrl: process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io',
+        contractAddress: process.env.STARKNET_CONTRACT_ADDRESS,
+        workProof: {
+          connected: false,
+          message: 'Not tested',
+          name: '',
+          version: '',
+          admin: '',
+          submissionCount: ''
+        }
       },
       lisk: {
-        connected: true,
-        wsUrl: 'wss://ws.api.lisk.com/'
+        connected: false,
+        wsUrl: 'wss://ws.api.lisk.com/',
+        message: 'Not tested'
+      },
+      madToken: {
+        connected: false,
+        contractAddress: process.env.MAD_TOKEN_CONTRACT_ADDRESS || null,
+        message: 'MAD token contract not deployed yet'
       }
-    });
+    };
+
+    // Test Starknet connection using starkli
+    try {
+      console.log('Testing Starknet connection...');
+      
+      // Test contract info
+      const contractInfoCmd = `starkli call ${process.env.STARKNET_CONTRACT_ADDRESS} get_contract_info --network sepolia`;
+      const contractInfoOutput = execSync(contractInfoCmd, { encoding: 'utf8', stdio: 'pipe' });
+      const contractInfo = JSON.parse(contractInfoOutput);
+      
+      // Decode the contract info (it's in hex)
+      const name = Buffer.from(contractInfo[0].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
+      const version = Buffer.from(contractInfo[1].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
+      
+      // Test admin
+      const adminCmd = `starkli call ${process.env.STARKNET_CONTRACT_ADDRESS} get_admin --network sepolia`;
+      const adminOutput = execSync(adminCmd, { encoding: 'utf8', stdio: 'pipe' });
+      const admin = JSON.parse(adminOutput)[0];
+      
+      // Test submission count
+      const submissionCountCmd = `starkli call ${process.env.STARKNET_CONTRACT_ADDRESS} get_submission_count --network sepolia`;
+      const submissionCountOutput = execSync(submissionCountCmd, { encoding: 'utf8', stdio: 'pipe' });
+      const submissionCount = JSON.parse(submissionCountOutput);
+      
+      status.starknet.connected = true;
+      status.starknet.workProof = {
+        connected: true,
+        message: 'WorkProof contract connected successfully',
+        name: name,
+        version: version,
+        admin: admin,
+        submissionCount: submissionCount[0] + submissionCount[1] // u256 is split into low and high
+      };
+      console.log('✅ Starknet connection successful');
+    } catch (error) {
+      console.log('❌ Starknet connection failed:', error instanceof Error ? error.message : String(error));
+      status.starknet.workProof.message = `Connection failed: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    // Test Lisk connection
+    try {
+      console.log('Testing Lisk connection...');
+      // Simple test - just check if we can create a LiskService instance
+      const liskService = new LiskService();
+      status.lisk.connected = true;
+      status.lisk.message = 'Lisk service initialized';
+      console.log('✅ Lisk connection successful');
+    } catch (error) {
+      console.log('❌ Lisk connection failed:', error instanceof Error ? error.message : String(error));
+      status.lisk.message = `Connection failed: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    // Test MAD Token if deployed
+    if (process.env.MAD_TOKEN_CONTRACT_ADDRESS) {
+      try {
+        console.log('Testing MAD Token connection...');
+        const tokenInfoCmd = `starkli call ${process.env.MAD_TOKEN_CONTRACT_ADDRESS} get_mad_token_info --network sepolia`;
+        const tokenInfoOutput = execSync(tokenInfoCmd, { encoding: 'utf8', stdio: 'pipe' });
+        const tokenInfo = JSON.parse(tokenInfoOutput);
+        
+        // Decode token info
+        const name = Buffer.from(tokenInfo[0].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
+        const symbol = Buffer.from(tokenInfo[1].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
+        const decimals = parseInt(tokenInfo[2], 16);
+        const totalSupply = BigInt(tokenInfo[3]).toString();
+        
+        status.madToken = {
+          connected: true,
+          contractAddress: process.env.MAD_TOKEN_CONTRACT_ADDRESS,
+          message: 'MAD Token connected successfully',
+          name,
+          symbol,
+          decimals,
+          totalSupply
+        };
+        console.log('✅ MAD Token connection successful');
+      } catch (error) {
+        console.log('❌ MAD Token connection failed:', error instanceof Error ? error.message : String(error));
+        status.madToken.message = `Connection failed: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    }
+    
+    res.json(status);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get blockchain status' });
+    console.error('Blockchain status error:', error);
+    res.status(500).json({ error: 'Failed to get blockchain status', details: error instanceof Error ? error.message : String(error) });
   }
 });
 

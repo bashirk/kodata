@@ -23,6 +23,11 @@ trait IWorkProof<TContractState> {
     fn get_admin(ref self: TContractState) -> ContractAddress;
     fn get_submission_count(ref self: TContractState) -> u256;
     fn get_contract_info(ref self: TContractState) -> (felt252, felt252);
+    
+    // MAD Token functions
+    fn get_mad_token_balance(ref self: TContractState, user: ContractAddress) -> u256;
+    fn mint_mad_tokens(ref self: TContractState, to: ContractAddress, amount: u256);
+    fn get_mad_token_info(ref self: TContractState) -> (felt252, felt252, u8, u256);
 }
 
 #[starknet::contract]
@@ -44,6 +49,13 @@ mod work_proof {
         // Contract metadata
         contract_name: felt252,
         contract_version: felt252,
+        
+        // MAD Token storage (simplified - only admin has tokens for now)
+        mad_token_name: felt252,
+        mad_token_symbol: felt252,
+        mad_token_decimals: u8,
+        mad_token_total_supply: u256,
+        mad_token_admin_balance: u256,
     }
 
     // Events
@@ -56,6 +68,7 @@ mod work_proof {
         AdminAdded: AdminAdded,
         AdminRemoved: AdminRemoved,
         ReputationUpdated: ReputationUpdated,
+        MADTokensMinted: MADTokensMinted,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -98,6 +111,13 @@ mod work_proof {
         new_reputation: u256,
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct MADTokensMinted {
+        to: ContractAddress,
+        amount: u256,
+    }
+
+
     // Constructor
     #[constructor]
     fn constructor(ref self: ContractState, admin: ContractAddress) {
@@ -110,6 +130,13 @@ mod work_proof {
         
         // Initialize submission count
         self.submission_count.write(0);
+        
+        // Initialize MAD Token
+        self.mad_token_name.write('MAD Token');
+        self.mad_token_symbol.write('MAD');
+        self.mad_token_decimals.write(18_u8);
+        self.mad_token_total_supply.write(1000000000000000000000000); // 1M tokens
+        self.mad_token_admin_balance.write(1000000000000000000000000); // Give all tokens to admin
     }
 
     // External functions implementation
@@ -220,6 +247,44 @@ mod work_proof {
             let name = self.contract_name.read();
             let version = self.contract_version.read();
             (name, version)
+        }
+        
+        // MAD Token functions
+        fn get_mad_token_balance(ref self: ContractState, user: ContractAddress) -> u256 {
+            let admin = self.admin.read();
+            if user == admin {
+                self.mad_token_admin_balance.read()
+            } else {
+                0 // For now, only admin has tokens
+            }
+        }
+        
+        fn mint_mad_tokens(ref self: ContractState, to: ContractAddress, amount: u256) {
+            // Only admin can mint tokens
+            let caller = get_caller_address();
+            let admin = self.admin.read();
+            assert(caller == admin, 'Only admin can mint tokens');
+            
+            // For simplicity, add to admin balance
+            let current_balance = self.mad_token_admin_balance.read();
+            self.mad_token_admin_balance.write(current_balance + amount);
+            
+            let current_supply = self.mad_token_total_supply.read();
+            self.mad_token_total_supply.write(current_supply + amount);
+            
+            self.emit(MADTokensMinted {
+                to,
+                amount,
+            });
+        }
+        
+        fn get_mad_token_info(ref self: ContractState) -> (felt252, felt252, u8, u256) {
+            (
+                self.mad_token_name.read(),
+                self.mad_token_symbol.read(),
+                self.mad_token_decimals.read(),
+                self.mad_token_total_supply.read()
+            )
         }
     }
 

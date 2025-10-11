@@ -6,13 +6,20 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "pkill -f \"ts-node-dev\" && ts-node-dev --respawn --transpile-only src/index.ts",
     "build:prod": "tsc && npm run copy:assets",
     "copy:assets": "cp -r prisma dist/",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:seed": "ts-node prisma/seed.ts",
+    "mad:setup": "node scripts/deployment/setupMADToken.js",
+    "mad:deploy": "node scripts/deployment/deployMADToken.js",
+    "mad:keys": "node scripts/key-generation/generateStarknetKeys.js",
+    "mad:compile": "cd contracts/cairo && scarb build",
+    "mad:check": "node scripts/key-generation/checkEnv.js",
+    "deploy:workproof": "node scripts/deployment/deployWorkProofStarkli.js",
+    "deploy:workproof:starkli": "node scripts/deployment/deployWorkProofStarkli.js"
   },
   "dependencies": {
     "@liskhq/lisk-api-client": "^6.0.2",

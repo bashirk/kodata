@@ -87,14 +87,39 @@ export class StarknetService {
         throw new Error('Failed to load Starknet contract');
       }
       
+      // Convert UUID to a hash that fits in Cairo felt (31 chars max)
+      // Use a simple hash of the submission ID to ensure it fits in felt
+      const submissionHash = this.hashSubmissionId(submissionId);
+      
       // Call the approve_submission function on the contract
-      const tx = await this.contract.invoke('approve_submission', [submissionId]);
+      const tx = await this.contract.invoke('approve_submission', [submissionHash]);
       console.log('Starknet submission approval transaction sent:', tx.transaction_hash);
       return tx.transaction_hash;
     } catch (error) {
       console.error('StarknetService approveSubmission error:', error);
       throw new Error(`Failed to approve submission on Starknet: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  /**
+   * Hash a submission ID to fit in Cairo felt (31 chars max)
+   * 
+   * @param submissionId - The UUID submission ID
+   * @returns A hash string that fits in Cairo felt
+   */
+  private hashSubmissionId(submissionId: string): string {
+    // Simple hash function to convert UUID to shorter string
+    // This ensures the ID fits in Cairo's felt type (31 chars max)
+    let hash = 0;
+    for (let i = 0; i < submissionId.length; i++) {
+      const char = submissionId.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    // Convert to positive number and take last 8 characters
+    const positiveHash = Math.abs(hash).toString(16);
+    return positiveHash.slice(-8).padStart(8, '0');
   }
 
   /**

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
-    "dev": "pkill -f \"ts-node-dev\" && ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build:prod": "tsc && npm run copy:assets",
     "copy:assets": "cp -r prisma dist/",
     "db:generate": "prisma generate",

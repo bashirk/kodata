@@ -233,14 +233,14 @@ app.get('/api/mad-token/info', async (req, res) => {
     const decimals = parseInt(tokenInfo[2], 16);
     const totalSupply = BigInt(tokenInfo[3]).toString();
     
-    res.json({
+    return res.json({
       name,
       symbol,
       decimals,
       totalSupply
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get MAD token info' });
+    return res.status(500).json({ error: 'Failed to get MAD token info' });
   }
 });
 
@@ -256,12 +256,12 @@ app.get('/api/mad-token/balance/:address', async (req, res) => {
     const balanceOutput = execSync(balanceCmd, { encoding: 'utf8', stdio: 'pipe' });
     const balance = JSON.parse(balanceOutput);
     
-    res.json({ 
+    return res.json({ 
       address: req.params.address, 
       balance: balance[0] 
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get MAD token balance' });
+    return res.status(500).json({ error: 'Failed to get MAD token balance' });
   }
 });
 
@@ -361,7 +361,11 @@ app.get('/api/blockchain/status', async (req, res) => {
       madToken: {
         connected: false,
         contractAddress: process.env.MAD_TOKEN_CONTRACT_ADDRESS || null,
-        message: 'MAD token contract not deployed yet'
+        message: 'MAD token contract not deployed yet',
+        name: '',
+        symbol: '',
+        decimals: 0,
+        totalSupply: ''
       }
     };
 

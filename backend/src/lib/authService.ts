@@ -73,8 +73,9 @@ export class AuthService {
         signatureString = signature.signature;
       } else if (signature.signature && typeof signature.signature === 'object') {
         // Object format with r, s, recovery
-        if (signature.signature.r && signature.signature.s) {
-          signatureString = `${signature.signature.r}${signature.signature.s}`;
+        const sigObj = signature.signature as { r?: string; s?: string; recovery?: number };
+        if (sigObj.r && sigObj.s) {
+          signatureString = `${sigObj.r}${sigObj.s}`;
         } else {
           console.warn('Invalid signature object format:', signature.signature);
           return false;

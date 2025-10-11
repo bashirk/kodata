@@ -43,7 +43,7 @@ export class LiskService {
           ['increaseReputation', delta, reason]
         ),
         gasLimit: 100000,
-        gasPrice: await this.provider.getGasPrice(),
+        gasPrice: ethers.parseUnits('20', 'gwei'), // Use fixed gas price for Lisk Sepolia
       };
 
       // Send transaction

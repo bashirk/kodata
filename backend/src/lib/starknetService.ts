@@ -117,14 +117,14 @@ export class StarknetService {
         throw new Error('Failed to load Starknet contract');
       }
       
-      // Call contract info methods using invoke for external functions
-      const contractInfoResult = await this.contract.invoke('get_contract_info', []);
-      const admin = await this.contract.invoke('get_admin', []);
-      const submissionCount = await this.contract.invoke('get_submission_count', []);
+      // Call contract info methods using call for view functions
+      const contractInfoResult = await this.contract.call('get_contract_info', []);
+      const admin = await this.contract.call('get_admin', []);
+      const submissionCount = await this.contract.call('get_submission_count', []);
       
       // Parse the contract info result (it's a tuple)
-      const name = contractInfoResult[0];
-      const version = contractInfoResult[1];
+      const name = (contractInfoResult as any)[0];
+      const version = (contractInfoResult as any)[1];
       
       return {
         name: name.toString(),

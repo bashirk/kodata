@@ -176,7 +176,8 @@ app.get('/api/submissions/:id', authenticateToken, async (req, res) => {
 app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res) => {
   try {
     const submission = await prisma.submission.findUnique({
-      where: { id: req.params.id }
+      where: { id: req.params.id },
+      include: { user: true }
     });
     
     if (!submission) {
@@ -192,12 +193,48 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
     // Approve on Starknet
     const starknetTxHash = await starknetService.approveSubmission(submission.id);
     
-    // Update submission status
+    // Calculate MAD token reward based on quality score
+    const baseReward = 100; // Base reward: 100 MAD tokens
+    const qualityMultiplier = 1.0; // Can be adjusted based on submission quality
+    const rewardAmount = (baseReward * qualityMultiplier).toString();
+    
+    // Mint MAD tokens to the submitter
+    let madTokenTxHash = null;
+    let rewardError = null;
+    try {
+      if (submission.user.starknetAddress) {
+        console.log(`Minting ${rewardAmount} MAD tokens to ${submission.user.starknetAddress} for approved submission ${submission.id}`);
+        
+        // Use the MAD token service to mint tokens securely
+        try {
+          madTokenTxHash = await madTokenService.mintTokens(
+            submission.user.starknetAddress, 
+            rewardAmount, 
+            `approval_reward_submission_${submission.id}`
+          );
+          console.log(`✅ MAD tokens minted successfully: ${madTokenTxHash}`);
+        } catch (mintError) {
+          console.warn('⚠️ MAD token minting failed:', mintError instanceof Error ? mintError.message : String(mintError));
+          rewardError = 'Token minting failed: ' + (mintError instanceof Error ? mintError.message : String(mintError));
+          // Continue with approval even if token minting fails
+        }
+      } else {
+        rewardError = 'User has no Starknet address for token rewards';
+      }
+    } catch (error) {
+      console.error('❌ MAD token reward error:', error);
+      rewardError = error instanceof Error ? error.message : 'Unknown reward error';
+    }
+    
+    // Update submission status with reward information
     const updatedSubmission = await prisma.submission.update({
       where: { id: submission.id },
       data: { 
         status: 'APPROVED',
-        qualityScore: 85 // Quality score based on review
+        qualityScore: 85, // Quality score based on review
+        rewardAmount: rewardAmount,
+        rewardTxHash: madTokenTxHash,
+        rewardError: rewardError
       }
     });
     
@@ -207,7 +244,12 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
     res.json({ 
       submission: updatedSubmission,
       starknetTxHash,
-      message: 'Submission approved and queued for Lisk reputation update'
+      madTokenReward: {
+        amount: rewardAmount,
+        txHash: madTokenTxHash,
+        error: rewardError
+      },
+      message: 'Submission approved, MAD tokens rewarded, and queued for Lisk reputation update'
     });
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to approve submission' });
@@ -333,6 +375,107 @@ app.post('/api/admin/mad-token/transfer', authenticateToken, async (req, res) =>
     res.json({ txHash, message: 'Transfer transaction submitted' });
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to transfer tokens' });
+  }
+});
+
+// Reward management endpoints
+app.get('/api/rewards/history/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Get user's reward history from approved submissions
+    const rewardHistory = await prisma.submission.findMany({
+      where: {
+        userId: userId,
+        status: 'APPROVED',
+        rewardAmount: { not: null }
+      },
+      select: {
+        id: true,
+        taskId: true,
+        rewardAmount: true,
+        rewardTxHash: true,
+        rewardError: true,
+        qualityScore: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    // Calculate total rewards
+    const totalRewards = rewardHistory.reduce((sum, submission) => {
+      return sum + (submission.rewardAmount ? parseInt(submission.rewardAmount) : 0);
+    }, 0);
+    
+    return res.json({
+      userId,
+      totalRewards: totalRewards.toString(),
+      rewardCount: rewardHistory.length,
+      history: rewardHistory
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get reward history' });
+  }
+});
+
+app.get('/api/rewards/stats', authenticateToken, async (req, res) => {
+  try {
+    // Get overall reward statistics
+    const totalRewards = await prisma.submission.aggregate({
+      where: {
+        status: 'APPROVED',
+        rewardAmount: { not: null }
+      },
+      _count: true
+    });
+    
+    const rewardStats = await prisma.submission.groupBy({
+      by: ['status'],
+      _count: true,
+      where: {
+        rewardAmount: { not: null }
+      }
+    });
+    
+    return res.json({
+      totalRewardTransactions: totalRewards._count,
+      rewardStats: rewardStats
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get reward stats' });
+  }
+});
+
+app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
+  try {
+    const { to, amount, reason } = req.body;
+    
+    if (!to || !amount) {
+      return res.status(400).json({ error: 'Recipient address and amount are required' });
+    }
+    
+    // Use the MAD token service to mint tokens securely
+    try {
+      const txHash = await madTokenService.mintTokens(to, amount, reason || 'manual reward');
+      
+      console.log(`✅ Manual reward minted: ${amount} MAD tokens to ${to} (${reason || 'manual reward'})`);
+      
+      return res.json({
+        txHash,
+        amount,
+        recipient: to,
+        reason: reason || 'manual reward',
+        message: 'Manual reward transaction submitted'
+      });
+    } catch (mintError) {
+      console.error('❌ Manual reward minting failed:', mintError instanceof Error ? mintError.message : String(mintError));
+      return res.status(500).json({ 
+        error: 'Failed to mint manual reward',
+        details: mintError instanceof Error ? mintError.message : String(mintError)
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process manual reward' });
   }
 });
 

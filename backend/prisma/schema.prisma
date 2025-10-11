@@ -48,6 +48,9 @@ model Submission {
   liskTxId     String?     // Lisk tx id for reputation / attestation
   status       SubmissionStatus @default(PENDING)
   qualityScore Int?
+  rewardAmount String?     // MAD token reward amount
+  rewardTxHash String?     // MAD token transaction hash
+  rewardError  String?     // Reward error message if any
   createdAt    DateTime @default(now())
 
   user         User     @relation(fields: [userId], references: [id])

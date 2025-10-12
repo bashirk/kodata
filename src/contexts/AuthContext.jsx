@@ -272,6 +272,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const transferTokens = async (to, amount, from) => {
+    try {
+      const result = await apiService.transferTokens(to, amount, from);
+      return result;
+    } catch (error) {
+      console.error('Failed to transfer tokens:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     isLoading,
@@ -297,6 +307,7 @@ export const AuthProvider = ({ children }) => {
     getRewardHistory,
     getRewardStats,
     createManualReward,
+    transferTokens,
     walletService
   };
 

@@ -140,6 +140,8 @@ export class MADTokenService {
         throw new Error('Failed to load MAD Token contract');
       }
       
+      console.log(`🎯 Attempting to mint ${amount} MAD tokens to ${to} for reason: ${reason}`);
+      
       const tx = await this.contract.mint_mad_tokens(to, amount);
       console.log('MAD Token mint transaction sent:', tx.transaction_hash);
       return tx.transaction_hash;
@@ -192,9 +194,39 @@ export class MADTokenService {
   }
 
   /**
-   * Transfer tokens (not implemented yet)
+   * Transfer tokens between users
    */
-  async transferTokens(to: string, amount: string): Promise<string> {
-    throw new Error('Token transfers not implemented yet');
+  async transferTokens(to: string, amount: string, from?: string): Promise<string> {
+    try {
+      if (!this.contract) {
+        await this.loadContract();
+      }
+      
+      if (!this.contract) {
+        throw new Error('Failed to load MAD Token contract');
+      }
+      
+      // If no 'from' address provided, use the admin account
+      const fromAddress = from || process.env.STARKNET_ACCOUNT_ADDRESS;
+      if (!fromAddress) {
+        throw new Error('No sender address provided and STARKNET_ACCOUNT_ADDRESS not set');
+      }
+      
+      console.log(`🔄 Attempting to transfer ${amount} MAD tokens from ${fromAddress} to ${to}`);
+      
+      // Check if the contract has the transfer function
+      if (!this.contract.abi || !this.contract.abi.some((item: any) => item.name === 'transfer_mad_tokens')) {
+        console.log('⚠️ Contract ABI does not contain transfer_mad_tokens function');
+        console.log('Available functions:', this.contract.abi?.map((item: any) => item.name) || 'No ABI loaded');
+        throw new Error('Contract does not have transfer_mad_tokens function');
+      }
+      
+      const tx = await this.contract.transfer_mad_tokens(fromAddress, to, amount);
+      console.log('MAD Token transfer transaction sent:', tx.transaction_hash);
+      return tx.transaction_hash;
+    } catch (error) {
+      console.error('MADTokenService transferTokens error:', error);
+      throw new Error(`Failed to transfer tokens: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 }

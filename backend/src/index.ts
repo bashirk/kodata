@@ -586,6 +586,39 @@ app.post('/api/curation/auto-approve', authenticateToken, async (req, res) => {
   }
 });
 
+// Token transfer endpoint
+app.post('/api/mad-token/transfer', authenticateToken, async (req, res) => {
+  try {
+    const { to, amount, from } = req.body;
+    
+    if (!to || !amount) {
+      return res.status(400).json({ error: 'Recipient address and amount are required' });
+    }
+    
+    // Validate amount is a positive number
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return res.status(400).json({ error: 'Amount must be a positive number' });
+    }
+    
+    console.log(`🔄 Processing token transfer: ${amount} MAD from ${from || 'admin'} to ${to}`);
+    
+    const txHash = await madTokenService.transferTokens(to, amount, from);
+    
+    return res.json({
+      success: true,
+      transactionHash: txHash,
+      message: `Successfully transferred ${amount} MAD tokens to ${to}`
+    });
+  } catch (error) {
+    console.error('Token transfer error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to transfer tokens',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
   try {
     const { to, amount, reason } = req.body;

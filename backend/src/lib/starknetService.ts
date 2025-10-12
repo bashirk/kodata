@@ -102,11 +102,7 @@ export class StarknetService {
       if (!this.contract.abi || !this.contract.abi.some((item: any) => item.name === 'approve_submission')) {
         console.log('⚠️ Contract ABI does not contain approve_submission function');
         console.log('Available functions:', this.contract.abi?.map((item: any) => item.name) || 'No ABI loaded');
-        
-        // For now, simulate approval success since the contract might not have this function yet
-        const simulatedTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-        console.log('🎭 Simulating approval with hash:', simulatedTxHash);
-        return simulatedTxHash;
+        throw new Error('Contract does not have approve_submission function');
       }
       
       // Call the approve_submission function on the contract
@@ -115,24 +111,6 @@ export class StarknetService {
       return tx.transaction_hash;
     } catch (error) {
       console.error('StarknetService approveSubmission error:', error);
-      
-      // Handle specific RPC errors
-      if (error instanceof Error) {
-        if (error.message.includes('Unexpected end of JSON input')) {
-          console.log('🔄 RPC connection issue detected, simulating approval for development');
-          const simulatedTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-          console.log('🎭 Simulating approval due to RPC issue:', simulatedTxHash);
-          return simulatedTxHash;
-        }
-        
-        if (error.message.includes('Network error') || error.message.includes('fetch')) {
-          console.log('🌐 Network connectivity issue, simulating approval for development');
-          const simulatedTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-          console.log('🎭 Simulating approval due to network issue:', simulatedTxHash);
-          return simulatedTxHash;
-        }
-      }
-      
       throw new Error(`Failed to approve submission on Starknet: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

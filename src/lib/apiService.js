@@ -171,6 +171,13 @@ class ApiService {
     });
   }
 
+  async transferTokens(to, amount, from) {
+    return this.request('/api/mad-token/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ to, amount, from }),
+    });
+  }
+
   // Blockchain status
   async getBlockchainStatus() {
     return this.request('/api/blockchain/status');

@@ -30,6 +30,7 @@ export function AdminDashboard({ isOpen, onClose }) {
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedSubmission, setSelectedSubmission] = useState(null)
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [madTokenInfo, setMadTokenInfo] = useState(null)
   const [userBalance, setUserBalance] = useState(null)
   const [adminStats, setAdminStats] = useState({
@@ -442,7 +443,10 @@ export function AdminDashboard({ isOpen, onClose }) {
                               )}
                               
                               <Button
-                                onClick={() => setSelectedSubmission(submission)}
+                                onClick={() => {
+                                  setSelectedSubmission(submission)
+                                  setShowSubmissionModal(true)
+                                }}
                                 size="sm"
                                 variant="outline"
                               >
@@ -461,6 +465,222 @@ export function AdminDashboard({ isOpen, onClose }) {
           )}
         </div>
       </div>
+
+      {/* Submission Detail Modal */}
+      {showSubmissionModal && selectedSubmission && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Submission Details
+            </h2>
+            <Button
+              onClick={() => {
+                setShowSubmissionModal(false)
+                setSelectedSubmission(null)
+              }}
+              variant="outline"
+              size="sm"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Submission ID</h3>
+                <p className="text-sm text-gray-600 font-mono">{selectedSubmission.id}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Status</h3>
+                {getStatusBadge(selectedSubmission.status)}
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Task ID</h3>
+                <p className="text-sm text-gray-600 font-mono">{selectedSubmission.taskId}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Created</h3>
+                <p className="text-sm text-gray-600">
+                  {new Date(selectedSubmission.createdAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Metadata */}
+            {selectedSubmission.metadata && (
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Submission Content</h3>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  {selectedSubmission.metadata.title && (
+                    <div>
+                      <h4 className="font-medium text-gray-800">Title</h4>
+                      <p className="text-gray-700">{selectedSubmission.metadata.title}</p>
+                    </div>
+                  )}
+                  
+                  {selectedSubmission.metadata.description && (
+                    <div>
+                      <h4 className="font-medium text-gray-800">Description</h4>
+                      <p className="text-gray-700 whitespace-pre-wrap">{selectedSubmission.metadata.description}</p>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {selectedSubmission.metadata.dataType && (
+                      <div>
+                        <h4 className="font-medium text-gray-800">Data Type</h4>
+                        <p className="text-gray-700">{selectedSubmission.metadata.dataType}</p>
+                      </div>
+                    )}
+                    
+                    {selectedSubmission.metadata.contributionType && (
+                      <div>
+                        <h4 className="font-medium text-gray-800">Contribution Type</h4>
+                        <p className="text-gray-700">{selectedSubmission.metadata.contributionType}</p>
+                      </div>
+                    )}
+                    
+                    {selectedSubmission.metadata.license && (
+                      <div>
+                        <h4 className="font-medium text-gray-800">License</h4>
+                        <p className="text-gray-700">{selectedSubmission.metadata.license}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {selectedSubmission.metadata.tags && selectedSubmission.metadata.tags.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-800">Tags</h4>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {selectedSubmission.metadata.tags.map((tag, index) => (
+                          <Badge key={index} className="bg-blue-100 text-blue-800">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Quality Assessment */}
+            {selectedSubmission.qualityScore !== null && (
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Quality Assessment</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center space-x-4">
+                    <div>
+                      <h4 className="font-medium text-gray-800">Quality Score</h4>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl font-bold text-gray-900">
+                          {selectedSubmission.qualityScore}
+                        </span>
+                        <span className="text-sm text-gray-600">/ 100</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${
+                            selectedSubmission.qualityScore >= 85 ? 'bg-green-500' :
+                            selectedSubmission.qualityScore >= 70 ? 'bg-yellow-500' :
+                            selectedSubmission.qualityScore >= 50 ? 'bg-orange-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${selectedSubmission.qualityScore}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* User Information */}
+            {selectedSubmission.user && (
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Submitter Information</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-gray-800">Name</h4>
+                      <p className="text-gray-700">{selectedSubmission.user.name || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-800">Starknet Address</h4>
+                      <p className="text-gray-700 font-mono text-sm">
+                        {formatAddress(selectedSubmission.user.starknetAddress)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reward Information */}
+            {selectedSubmission.rewardAmount && (
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Reward Information</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-gray-800">Reward Amount</h4>
+                      <p className="text-gray-700 font-semibold">
+                        {selectedSubmission.rewardAmount} MAD
+                      </p>
+                    </div>
+                    {selectedSubmission.rewardTxHash && (
+                      <div>
+                        <h4 className="font-medium text-gray-800">Transaction Hash</h4>
+                        <p className="text-gray-700 font-mono text-sm">
+                          {selectedSubmission.rewardTxHash}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                onClick={() => {
+                  setShowSubmissionModal(false)
+                  setSelectedSubmission(null)
+                }}
+                variant="outline"
+              >
+                Close
+              </Button>
+              {selectedSubmission.status === 'PENDING' && (
+                <Button
+                  onClick={async () => {
+                    try {
+                      await approveSubmission(selectedSubmission.id)
+                      setShowSubmissionModal(false)
+                      setSelectedSubmission(null)
+                      // Refresh submissions
+                      const updatedSubmissions = await getSubmissions()
+                      setSubmissions(updatedSubmissions)
+                    } catch (error) {
+                      console.error('Failed to approve submission:', error)
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Approve
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      )}
     </div>
   )
 }

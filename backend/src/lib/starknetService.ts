@@ -95,7 +95,7 @@ export class StarknetService {
       console.log(`🔍 Attempting to approve submission:`, {
         originalId: submissionId,
         hashedId: submissionHash,
-        contractAddress: this.contractAddress
+        contractAddress: this.contractAddress || 'Not loaded'
       });
       
       // Check if the contract has the approve_submission function

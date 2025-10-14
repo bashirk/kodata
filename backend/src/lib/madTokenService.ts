@@ -23,7 +23,7 @@ export class MADTokenService {
   constructor() {
     // Initialize RPC provider for Starknet testnet
     this.provider = new RpcProvider({
-      nodeUrl: process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io',
+      nodeUrl: process.env.STARKNET_RPC_URL || 'https://starknet-sepolia.public.blastapi.io',
     });
     
     // Initialize account with proper error handling

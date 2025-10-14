@@ -1,24 +1,47 @@
 # Starknet Contract Deployment Guide
 
-This guide explains how to deploy a WorkProof contract on Starknet testnet and configure your KoData DAO backend to use it.
+This guide explains how to deploy a WorkProof contract on Starknet Sepolia testnet and configure your KoData DAO backend to use it.
+
+## Prerequisites
+
+- Install `starkli` CLI tool
+- Install `scarb` for Cairo compilation
+- Have access to Starknet Sepolia testnet STRK tokens
 
 ## Step 1: Create Starknet Account
 
+### 1.1 Generate Account Files
+
 ```bash
-# Create a new account
+# Create wallet directory
+mkdir -p ~/.starkli-wallets/sepolia
 
-starkli account deploy ~/.starkli-wallets/sepolia/my_account.json --keystore ./keystore.json --keystore-password "PASSWORD"
-
-
+# Generate a new keypair
 starkli signer gen-keypair
-starkli signer keystore new ~/.starkli_keystore/backend.json
-starkli account oz init ~/.starkli_accounts/new_backend.json
 
+# Create keystore with the generated private key (replace with your actual private key)
+echo "YOUR_PRIVATE_KEY_HERE" | starkli signer keystore from-key ./keystore.json --private-key-stdin --password "test123"
 
-# This will generate:
-# - Account address (copy this to STARKNET_ACCOUNT_ADDRESS)
-# - Private key (copy this to STARKNET_PRIVATE_KEY)
+# Initialize account configuration
+starkli account oz init ~/.starkli-wallets/sepolia/my_account.json --keystore ./keystore.json --keystore-password "test123"
 ```
+
+### 1.2 Deploy Account to Network
+
+```bash
+# Deploy the account (requires STRK tokens for deployment fee)
+starkli account deploy ~/.starkli-wallets/sepolia/my_account.json --keystore ./keystore.json --keystore-password "test123"
+```
+
+**Output Example:**
+```
+Once deployed, this account will be available at:
+    0x05c92893b134e0c52538849337ffff35e6dc0dcdd1bb432c03145ac28b52649b
+```
+
+**Save this Account Address for your environment variables.**
+
+**Important:** Before deploying, you must fund this account with STRK tokens from the faucet.
 
 ## Step 2: Create WorkProof Contract
 
@@ -29,70 +52,53 @@ use starknet::ContractAddress;
 ...
 ```
 
-## Step 3: Compile and Initialize Account
+## Step 2: Fund Your Account
 
-First, ensure you have sufficient test tokens from a faucet:
+Before deploying contracts, ensure your account has sufficient STRK tokens:
+
+```bash
+# Get STRK tokens from Sepolia faucet
+# Visit: https://starknet-faucet.vercel.app/
+# Enter your account address: 0x07112aa27e0ed57dd7eda06fc9e41e96b83278071066838a6ed084ae1cd3c8ca
+# Request tokens (you'll need at least 5-10 STRK for contract deployment)
+```
+
+## Step 3: Compile Contract
 
 ### 3.1 Compile the Contract
 
-Run `scarb build` to compile your Cairo contract.
-
 ```bash
+# Navigate to contract directory
+cd backend/contracts/cairo
+
 # Compile the contract
 scarb build
 ```
 
-Verify the generated artifacts (the compiled class files) are available:
+Verify the generated artifacts are available:
 
 ```bash
 # List artifacts
 ls -la target/dev/
 ```
 
-### 3.2 Initialize and Deploy Starknet Account
-
-This sequence sets up a local keystore and config file for your account, then deploys it to the network.
-
-1.  **Create Wallet Folder:**
-
-    ```bash
-    mkdir -p ~/.starkli-wallets/sepolia
-    ```
-
-2.  **Create Private Key Keystore** (using a test private key for demonstration):
-
-    ```bash
-    echo "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" | starkli signer keystore from-key ./keystore.json --private-key-stdin --password "test123"
-    ```
-
-3.  **Create Account Configuration File:**
-
-    ```bash
-    starkli account oz init ~/.starkli-wallets/sepolia/my_account.json --keystore ./keystore.json --keystore-password "test123"
-    ```
-
-4.  **Deploy the Created Account** (This sends a transaction to the network):
-
-    ```bash
-    starkli account deploy ~/.starkli-wallets/sepolia/my_account.json --keystore ./keystore.json --keystore-password "test123"
-    ```
-
-    *This command will output your Starknet Account Address (`STARKNET_ACCOUNT_ADDRESS`).*
+You should see:
+- `backend_work_proof.compiled_contract_class.json`
+- `backend_work_proof.contract_class.json`
 
 
 ## Step 4: Declare Contract Class
 
-Declare the compiled contract on the Starknet network to register its class.
+Declare the compiled contract on the Starknet Sepolia network to register its class.
 
 ```bash
-# Example Transaction: 0x023d06a2d01a39380e1163a2658f59396b1f717b473f2a3eae2d7774ab90a56c confirmed
-
-# Declare the contract class for deployed account (this registers it on the network)
+# Declare the contract class (this registers it on the network)
 starkli declare \
      --account ~/.starkli-wallets/sepolia/my_account.json \
-     --keystore ./keystore.json --keystore-password "PASSWORD" \
+     --keystore ./keystore.json --keystore-password "test123" \
      --casm-file target/dev/backend_work_proof.compiled_contract_class.json \
-     target/dev/backend_work_proof.contract_class.json
+     target/dev/backend_work_proof.contract_class.json \
+     --network sepolia
 ```
 
 **Output Example:**
@@ -102,10 +108,10 @@ Declaring Cairo 1 class:
 .
 .
 Class hash declared:
-0x0797147f623a37114ad29c350a13bd9bf7163e42d4e3f520ad9d86b8a0a9ef7e
+0x07d6924ff230afbe1525380c79909946a2217b9eb83b0b70d9b47802a493cc88
 ```
 
-**Save this Class Hash (`<CLASS_HASH>`) for the next step.**
+**Save this Class Hash for the next step.**
 
 -----
 
@@ -114,45 +120,57 @@ Class hash declared:
 Use the declared class hash to deploy a specific instance of the contract.
 
 ```bash
-# Deploy an instance of the contract.
-# Replace <CLASS_HASH> and <STARKNET_ACCOUNT_ADDRESS> with your values.
+# Deploy an instance of the contract
+# Replace CLASS_HASH with the hash from Step 4
+# Replace STARKNET_ACCOUNT_ADDRESS with your account address
 
 starkli deploy \
      --account ~/.starkli-wallets/sepolia/my_account.json \
      --keystore ./keystore.json --keystore-password "test123" \
-     <CLASS_HASH> <STARKNET_ACCOUNT_ADDRESS>
+     0x07d6924ff230afbe1525380c79909946a2217b9eb83b0b70d9b47802a493cc88 \
+     0x07112aa27e0ed57dd7eda06fc9e41e96b83278071066838a6ed084ae1cd3c8ca \
+     --network sepolia
 ```
 
-*This command will output the final **Contract Address**. **This is your `STARKNET_CONTRACT_ADDRESS`**.*
+**Output Example:**
+
+```
+Contract deployed at: 0x01b047f96c3a2d17ac45711ed577611d46178e23f7c2bbe594a1647fd21935bb
+```
+
+**This is your `STARKNET_CONTRACT_ADDRESS`.**
 
 ### Test Deployment
 
 Use the contract address to call read functions and verify the deployment.
 
 ```bash
-# Check contract info
-starkli call <STARKNET_CONTRACT_ADDRESS> get_contract_info
-
 # Check admin address
-starkli call <STARKNET_CONTRACT_ADDRESS> get_admin
+starkli call 0x01b047f96c3a2d17ac45711ed577611d46178e23f7c2bbe594a1647fd21935bb get_admin --network sepolia
 
 # Check initial submission count
-starkli call <STARKNET_CONTRACT_ADDRESS> get_submission_count
+starkli call 0x01b047f96c3a2d17ac45711ed577611d46178e23f7c2bbe594a1647fd21935bb get_submission_count --network sepolia
 ```
 
 -----
 
 ## Step 6: Configure Environment Variables
 
-Update your `backend/.env` file with the addresses and keys generated or used during the setup process.
+Update your `backend/.env` file with the correct values:
 
 ```env
 # Starknet Configuration
-STARKNET_RPC_URL="https://starknet-testnet.public.blastapi.io"
-STARKNET_ACCOUNT_ADDRESS="0x..."  # From Step 3 (Deploy the created account)
-STARKNET_PRIVATE_KEY="0x..."      # The private key used to generate the keystore file (be careful with this!)
-STARKNET_CONTRACT_ADDRESS="0x..." # From Step 5 (Deploy an instance)
+STARKNET_RPC_URL="https://starknet-sepolia.public.blastapi.io"
+STARKNET_ACCOUNT_ADDRESS="YOUR_ACCOUNT_ADDRESS_FROM_STEP_1"
+STARKNET_PRIVATE_KEY="YOUR_PRIVATE_KEY_FROM_STEP_1"
+STARKNET_CONTRACT_ADDRESS="YOUR_CONTRACT_ADDRESS_FROM_STEP_5"
 ```
+
+**Important Notes:**
+- Use the private key generated in Step 1 with `starkli signer gen-keypair`
+- Use the account address from Step 1 after running `starkli account oz init`
+- Ensure your account is funded with STRK tokens before deploying contracts
+- The contract address comes from Step 5 after deploying the WorkProof contract
 
 -----
 
@@ -191,15 +209,55 @@ Perform a final test call using your complete account and RPC configuration.
 
 ```bash
 # Test calling the contract
-starkli call <CONTRACT_ADDRESS> get_admin --account ~/.starkli-wallets/sepolia/my_account.json --rpc https://starknet-testnet.public.blastapi.io
+starkli call 0x01b047f96c3a2d17ac45711ed577611d46178e23f7c2bbe594a1647fd21935bb get_admin --account ~/.starkli-wallets/sepolia/my_account.json --rpc https://starknet-sepolia.public.blastapi.io
+```
+
+## Step 9: Test Backend Integration
+
+After updating your `.env` file, restart your backend server and test the submission approval:
+
+```bash
+# Restart the backend server
+cd backend
+npm run dev
+
+# Test the submission approval endpoint
+curl -X POST http://localhost:3001/api/test/starknet-approval \
+  -H "Content-Type: application/json" \
+  -d '{"submissionId": "test-submission-final"}'
+```
+
+**Expected Success Response:**
+```json
+{
+  "success": true,
+  "message": "Starknet approval test successful",
+  "submissionId": "test-submission-final",
+  "txHash": "0x..."
+}
 ```
 
 ## Troubleshooting
 
-1. **Insufficient Balance**: Make sure your account has enough testnet ETH
-2. **Invalid Account**: Verify your account address and private key are correct
-3. **RPC Issues**: Try different RPC endpoints if you encounter connection issues
-4. **Contract Errors**: Check that your Cairo syntax is correct and matches Starknet v0.12+
+1. **"Unexpected end of JSON input" Error**: 
+   - Ensure you're using `https://starknet-sepolia.public.blastapi.io` (not the deprecated Goerli endpoint)
+   - Check that your RPC URL is correct in all environment files
+
+2. **"Account: invalid signature" Error**:
+   - Verify your private key matches your account address
+   - Use the correct private key: `0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef`
+
+3. **"Resources bounds exceed balance" Error**:
+   - Ensure your account has sufficient STRK tokens (at least 5-10 STRK)
+   - Get tokens from: https://starknet-faucet.vercel.app/
+
+4. **Contract Not Found Error**:
+   - Verify your contract address is correct: `0x01b047f96c3a2d17ac45711ed577611d46178e23f7c2bbe594a1647fd21935bb`
+   - Ensure the contract was deployed on Sepolia testnet
+
+5. **RPC Issues**: 
+   - Try different RPC endpoints if you encounter connection issues
+   - Check network status at: https://status.starknet.io/
 
 ## Production Considerations
 
@@ -215,4 +273,4 @@ starkli call <CONTRACT_ADDRESS> get_admin --account ~/.starkli-wallets/sepolia/m
 - [Cairo Book](https://book.cairo-lang.org/)
 - [Starkli Documentation](https://book.starkli.rs/)
 - [Starknet.js Documentation](https://www.starknetjs.com/docs/)
-- [Starknet Testnet Faucet](https://faucet.goerli.starknet.io/)
+- [Starknet Sepolia Faucet](https://starknet-faucet.vercel.app/)

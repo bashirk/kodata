@@ -47,7 +47,7 @@ async function generateStarknetKeys() {
     
     // Update or add Starknet configuration
     const updates = {
-      'STARKNET_RPC_URL': 'https://starknet-testnet.public.blastapi.io',
+      'STARKNET_RPC_URL': 'https://starknet-sepolia.public.blastapi.io',
       'STARKNET_ACCOUNT_ADDRESS': address,
       'STARKNET_PRIVATE_KEY': privateKeyHex
     };

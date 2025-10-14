@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Load environment variables from .env file if not already set
-const envPath = path.join(__dirname, '.env');
+const envPath = path.join(__dirname, '../../.env');
 if (fs.existsSync(envPath) && !process.env.STARKNET_ACCOUNT_ADDRESS) {
   const envContent = fs.readFileSync(envPath, 'utf8');
   const envLines = envContent.split('\n');
@@ -85,7 +85,7 @@ async function deployWorkProof() {
     const accountConfigPath = path.join(__dirname, 'account.json');
     if (!fs.existsSync(accountConfigPath)) {
       console.log('👤 Creating account configuration...');
-      const createAccountCmd = `starkli account oz init ${accountConfigPath} --keystore ${keystorePath} --keystore-password "${KEYSTORE_PASSWORD}"`;
+      const createAccountCmd = `starkli account oz init ${accountConfigPath} --keystore ${keystorePath} --keystore-password "${KEYSTORE_PASSWORD}" --address ${STARKNET_ACCOUNT_ADDRESS}`;
       execSync(createAccountCmd, { stdio: 'inherit' });
     }
     
@@ -156,7 +156,7 @@ async function deployWorkProof() {
     
     // Step 3: Verify deployment
     console.log('🔍 Step 3: Verifying deployment...');
-    const verifyCmd = `starkli call ${contractAddress} get_contract_info --account ${accountConfigPath} --rpc https://starknet-testnet.public.blastapi.io`;
+    const verifyCmd = `starkli call ${contractAddress} get_contract_info --account ${accountConfigPath} --rpc https://starknet-sepolia.public.blastapi.io`;
     
     try {
       const verifyOutput = execSync(verifyCmd, { encoding: 'utf8', stdio: 'pipe' });
@@ -170,9 +170,9 @@ async function deployWorkProof() {
       contractAddress,
       classHash,
       deploymentTime: new Date().toISOString(),
-      network: 'starknet-testnet',
+      network: 'starknet-sepolia',
       admin: STARKNET_ACCOUNT_ADDRESS,
-      rpcUrl: 'https://starknet-testnet.public.blastapi.io'
+      rpcUrl: 'https://starknet-sepolia.public.blastapi.io'
     };
     
     const deploymentPath = path.join(__dirname, 'WorkProof-deployment.json');
@@ -205,7 +205,7 @@ async function deployWorkProof() {
     console.log('  Contract Address:', contractAddress);
     console.log('  Class Hash:', classHash);
     console.log('  Admin:', STARKNET_ACCOUNT_ADDRESS);
-    console.log('  Network: Starknet Testnet');
+    console.log('  Network: Starknet Sepolia');
     
     console.log('\n📋 Next steps:');
     console.log('1. The contract is ready to receive submissions');

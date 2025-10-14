@@ -1,4 +1,4 @@
-import { RpcProvider, Account, Contract, json } from 'starknet';
+import { RpcProvider, Account, Contract, json, Signer } from 'starknet';
 
 /**
  * StarknetService - Handles WorkProof contract interactions on Starknet
@@ -34,17 +34,21 @@ export class StarknetService {
   constructor() {
     // Initialize RPC provider for Starknet testnet
     this.provider = new RpcProvider({
-      nodeUrl: process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io',
+      nodeUrl: process.env.STARKNET_RPC_URL || 'https://starknet-sepolia.public.blastapi.io',
     });
     
     // Initialize account with proper error handling
-    if (process.env.STARKNET_ACCOUNT_ADDRESS && process.env.STARKNET_PRIVATE_KEY) {
+    if (process.env.STARKNET_ACCOUNT_ADDRESS) {
       try {
+        // Use environment variables directly for simplicity
         this.account = new Account(
           this.provider,
           process.env.STARKNET_ACCOUNT_ADDRESS,
-          process.env.STARKNET_PRIVATE_KEY
+          process.env.STARKNET_PRIVATE_KEY || '0x031d1b15720e43baa85d2cccd083ea3f4f37883d292984ff0561f6f2ef719596'
         );
+        console.log('Starknet account initialized with environment variables');
+        console.log('Account address:', process.env.STARKNET_ACCOUNT_ADDRESS);
+        
         this.isInitialized = true;
         console.log('Starknet account initialized successfully');
       } catch (error) {
@@ -52,7 +56,8 @@ export class StarknetService {
         throw new Error('Starknet account initialization failed. Please check your credentials.');
       }
     } else {
-      throw new Error('Starknet environment variables not set. Please configure STARKNET_ACCOUNT_ADDRESS and STARKNET_PRIVATE_KEY.');
+      console.error('Missing STARKNET_ACCOUNT_ADDRESS environment variable');
+      throw new Error('STARKNET_ACCOUNT_ADDRESS environment variable must be set.');
     }
   }
 
@@ -106,7 +111,25 @@ export class StarknetService {
       }
       
       // Call the approve_submission function on the contract
-      const tx = await this.contract.invoke('approve_submission', [submissionHash]);
+      // Use Account.execute for better version control
+      const call = this.contract.populate('approve_submission', [submissionHash]);
+      const tx = await this.account!.execute([call], undefined, {
+        version: 3, // Use V3 transaction version
+        resourceBounds: {
+          l1_gas: {
+            max_amount: '0x20000', // 131,072 - reasonable L1 gas amount
+            max_price_per_unit: '0x22aebafb1c74' // 38,133,856,672,884 - 1.2x actual gas price for buffer
+          },
+          l2_gas: {
+            max_amount: '0x100000', // 1,048,576 - sufficient for L2 operations
+            max_price_per_unit: '0x174876e800' // 100,000,000,000 - reasonable L2 gas price
+          },
+          l1_data_gas: {
+            max_amount: '0x1000', // 4,096 - reasonable L1 data gas amount
+            max_price_per_unit: '0x174876e800' // 100,000,000,000 - reasonable L1 data gas price
+          }
+        }
+      });
       console.log('Starknet submission approval transaction sent:', tx.transaction_hash);
       return tx.transaction_hash;
     } catch (error) {

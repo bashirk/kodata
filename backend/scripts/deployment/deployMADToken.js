@@ -16,7 +16,7 @@ if (fs.existsSync(envPath) && !process.env.STARKNET_ACCOUNT_ADDRESS) {
 }
 
 // Configuration
-const STARKNET_RPC_URL = process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io';
+const STARKNET_RPC_URL = process.env.STARKNET_RPC_URL || 'https://starknet-sepolia.public.blastapi.io';
 const STARKNET_ACCOUNT_ADDRESS = process.env.STARKNET_ACCOUNT_ADDRESS;
 const STARKNET_PRIVATE_KEY = process.env.STARKNET_PRIVATE_KEY;
 

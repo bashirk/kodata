@@ -26,7 +26,7 @@ export class AuthService {
   constructor() {
     this.prisma = PrismaSingleton.getInstance();
     this.starknetProvider = new RpcProvider({
-      nodeUrl: process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io',
+      nodeUrl: process.env.STARKNET_RPC_URL || 'https://starknet-sepolia.public.blastapi.io',
     });
     this.jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
   }

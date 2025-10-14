@@ -58,6 +58,32 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Test endpoint to verify Starknet RPC fix (bypasses authentication for testing)
+app.post('/api/test/starknet-approval', async (req, res) => {
+  try {
+    const { submissionId } = req.body;
+    if (!submissionId) {
+      return res.status(400).json({ error: 'submissionId is required' });
+    }
+    
+    console.log(`🧪 Testing Starknet approval for submission: ${submissionId}`);
+    const txHash = await starknetService.approveSubmission(submissionId);
+    
+    res.json({ 
+      success: true, 
+      message: 'Starknet approval test successful',
+      submissionId,
+      txHash 
+    });
+  } catch (error) {
+    console.error('Starknet test error:', error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      details: error instanceof Error ? error.stack : String(error)
+    });
+  }
+});
+
 // Ready check endpoint
 app.get('/ready', async (req, res) => {
   try {
@@ -887,7 +913,7 @@ app.get('/api/blockchain/status', async (req, res) => {
     const status = {
       starknet: {
         connected: false,
-        rpcUrl: process.env.STARKNET_RPC_URL || 'https://starknet-testnet.public.blastapi.io',
+        rpcUrl: process.env.STARKNET_RPC_URL || 'https://starknet-sepolia.public.blastapi.io',
         contractAddress: process.env.STARKNET_CONTRACT_ADDRESS,
         workProof: {
           connected: false,

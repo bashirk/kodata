@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
+import jwt from 'jsonwebtoken';
 import { Relayer } from './lib/relayer';
 import { AuthService } from './lib/authService';
 import { StarknetService } from './lib/starknetService';
@@ -813,6 +814,88 @@ app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
 });
 
 // Runes Authentication endpoints
+// Bitcoin Runes authentication endpoint (no existing auth required)
+app.post('/api/runes/auth', async (req, res) => {
+  try {
+    const { btcAddress, signature, message, runeId } = req.body;
+    
+    if (!btcAddress || !signature || !message) {
+      return res.status(400).json({ error: 'Bitcoin address, signature, and message are required' });
+    }
+    
+    // Verify Bitcoin signature (basic validation for now)
+    const isValidSignature = await runesAuthService.verifyBitcoinSignature(btcAddress, message, signature);
+    if (!isValidSignature) {
+      return res.status(401).json({ error: 'Invalid Bitcoin signature' });
+    }
+    
+    // Verify Runes balance
+    const runesData = await runesAuthService.verifyRunesBalance(btcAddress, runeId);
+    
+    // Check if user already exists with this Bitcoin address
+    let user = await prisma.user.findFirst({
+      where: { btcAddress: btcAddress }
+    });
+    
+    if (!user) {
+      // Create new user with Bitcoin address
+      user = await prisma.user.create({
+        data: {
+          email: `${btcAddress}@bitcoin.local`, // Temporary email
+          name: `Bitcoin User ${btcAddress.slice(-8)}`,
+          btcAddress: btcAddress,
+          runesBalance: runesData.balance.toString(),
+          runesRuneId: runeId || runesData.runeId,
+          votingPower: Math.floor(runesData.balance / 100),
+          lastRunesSync: new Date()
+        }
+      });
+    } else {
+      // Update existing user's Runes data
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          runesBalance: runesData.balance.toString(),
+          runesRuneId: runeId || runesData.runeId,
+          votingPower: Math.floor(runesData.balance / 100),
+          lastRunesSync: new Date()
+        }
+      });
+    }
+    
+    // Generate JWT token compatible with authService.verifyToken()
+    const token = jwt.sign(
+      { userId: user.id, btcAddress: btcAddress },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+      { 
+        expiresIn: '7d',
+        issuer: 'kodata-dao',
+        audience: 'kodata-users'
+      }
+    );
+    
+    return res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        btcAddress: user.btcAddress,
+        runesBalance: user.runesBalance,
+        votingPower: user.votingPower
+      },
+      token,
+      runesData,
+      message: 'Bitcoin Runes authentication successful'
+    });
+  } catch (error) {
+    console.error('Bitcoin Runes auth error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to authenticate with Bitcoin Runes',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 app.post('/api/runes/register', authenticateToken, async (req, res) => {
   try {
     const { btcAddress, signature, message, runeId } = req.body;
@@ -839,6 +922,26 @@ app.post('/api/runes/register', authenticateToken, async (req, res) => {
     console.error('Runes registration error:', error);
     return res.status(500).json({ 
       error: 'Failed to register Runes holder',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post('/api/runes/balance', async (req, res) => {
+  try {
+    const { btcAddress, runeId } = req.body;
+    
+    if (!btcAddress) {
+      return res.status(400).json({ error: 'Bitcoin address is required' });
+    }
+    
+    const runesData = await runesAuthService.verifyRunesBalance(btcAddress, runeId);
+    
+    return res.json(runesData);
+  } catch (error) {
+    console.error('Runes balance error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to get Runes balance',
       details: error instanceof Error ? error.message : String(error)
     });
   }

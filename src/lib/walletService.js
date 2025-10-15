@@ -1,5 +1,6 @@
 // Wallet integration utilities for Starknet and Lisk
 import { RpcProvider, Account } from 'starknet';
+import { request } from 'sats-connect';
 
 class WalletService {
   constructor() {
@@ -301,62 +302,55 @@ class WalletService {
     }
   }
 
-  // Bitcoin wallet integration for Runes authentication
+  // Bitcoin wallet integration for Runes authentication using Sats Connect
   async connectBitcoinWallet() {
     try {
       console.log('🔗 Attempting to connect Bitcoin wallet for Runes authentication...');
       
-      // Check if Xverse Bitcoin provider is available
-      if (typeof window === 'undefined') {
-        throw new Error('Window object not available');
+      // Use wallet_getAccount method as per Sats Connect docs
+      const response = await request('wallet_getAccount', null);
+      
+      console.log('📋 Connection response:', response);
+      
+      if (response.status === 'success') {
+        // The response.result contains the addresses array directly
+        const addresses = response.result.addresses || response.result;
+        
+        if (addresses && addresses.length > 0) {
+          // Find the ordinals address (preferred for Runes)
+          const ordinalsAddress = addresses.find(
+            (address) => address.purpose === 'ordinals'
+          );
+          
+          // Fallback to payment address if ordinals not available
+          const paymentAddress = addresses.find(
+            (address) => address.purpose === 'payment'
+          );
+          
+          const selectedAddress = ordinalsAddress || paymentAddress;
+          
+          if (selectedAddress) {
+            console.log('✅ Bitcoin wallet connected:', selectedAddress.address);
+            return {
+              address: selectedAddress.address,
+              publicKey: selectedAddress.publicKey,
+              purpose: selectedAddress.purpose,
+              addressType: selectedAddress.addressType,
+              network: selectedAddress.network,
+              walletType: response.result.walletType,
+              type: 'bitcoin'
+            };
+          }
+        }
+        
+        throw new Error('No Bitcoin addresses found in wallet');
+      } else {
+        if (response.error.code === 'USER_REJECTION') {
+          throw new Error('User rejected the connection request');
+        } else {
+          throw new Error(`Connection failed: ${response.error.message}`);
+        }
       }
-      
-      if (!window.XverseProviders?.BitcoinProvider) {
-        throw new Error('xVerse Bitcoin provider not found. Please install xVerse wallet and refresh the page.');
-      }
-      
-      console.log('✅ Xverse Bitcoin provider detected');
-      const bitcoinProvider = window.XverseProviders.BitcoinProvider;
-      
-      // Request Bitcoin accounts - try different methods
-      console.log('📋 Requesting Bitcoin accounts...');
-      
-      let accounts;
-      try {
-        // Try the standard method first with timeout
-        accounts = await Promise.race([
-          bitcoinProvider.request({
-            method: 'getAccounts'
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Connection timeout')), 10000)
-          )
-        ]);
-      } catch (error) {
-        console.log('🔄 Trying alternative connection method...');
-        // Try alternative method
-        accounts = await Promise.race([
-          bitcoinProvider.request({
-            method: 'requestAccounts'
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Connection timeout')), 10000)
-          )
-        ]);
-      }
-      
-      console.log('📋 Accounts response:', accounts);
-      
-      if (accounts && accounts.length > 0) {
-        console.log('✅ Bitcoin wallet connected:', accounts[0]);
-        return {
-          address: accounts[0],
-          provider: bitcoinProvider,
-          type: 'bitcoin'
-        };
-      }
-      
-      throw new Error('No Bitcoin accounts found. Please create an account in xVerse wallet.');
     } catch (error) {
       console.error('❌ Bitcoin wallet connection failed:', error);
       throw new Error(`Failed to connect Bitcoin wallet: ${error.message}`);
@@ -367,46 +361,31 @@ class WalletService {
     try {
       console.log(`🔍 Verifying Runes balance for address: ${address}, runeId: ${runeId}`);
       
-      // Query SecretKey Labs API for Runes balance
-      const url = runeId 
-        ? `https://api.secretkeylabs.io/v2/runes/address/${address}/balance?runeId=${runeId}`
-        : `https://api.secretkeylabs.io/v2/runes/address/${address}/balance`;
-      
-      const response = await fetch(url, {
+      // Use backend API instead of direct API call to avoid CORS issues
+      const response = await fetch('http://localhost:3001/api/runes/balance', {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          btcAddress: address,
+          runeId: runeId
+        })
       });
       
       if (!response.ok) {
-        throw new Error(`SecretKey Labs API error: ${response.status}`);
+        throw new Error(`Backend API error: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('📊 SecretKey Labs API response:', data);
-      
-      // Find the specific Rune balance
-      if (data.balances && data.balances.length > 0) {
-        const runeBalance = runeId 
-          ? data.balances.find((r) => r.runeId === runeId)
-          : data.balances[0]; // Use first Rune if no specific ID provided
-        
-        const balance = runeBalance ? parseInt(runeBalance.confirmedBalance) : 0;
-        
-        console.log(`✅ Runes balance for ${runeBalance?.runeId || 'first rune'}: ${balance}`);
-        return {
-          balance,
-          runeId: runeBalance?.runeId || runeId || '',
-          address: address,
-          allRunes: data.balances
-        };
-      }
+      console.log('📊 Backend Runes API response:', data);
       
       return {
-        balance: 0,
-        runeId: runeId || '',
+        balance: data.balance || 0,
+        runeId: data.runeId || runeId || '',
         address: address,
-        allRunes: []
+        allRunes: data.allRunes || []
       };
     } catch (error) {
       console.error('❌ Runes balance verification failed:', error);
@@ -416,25 +395,30 @@ class WalletService {
 
   async signBitcoinMessage(message, wallet) {
     try {
-      console.log('Attempting to sign Bitcoin message:', message);
+      console.log('✍️ Attempting to sign Bitcoin message:', message);
       
       if (wallet.type === 'bitcoin') {
-        // Sign message proving Bitcoin address ownership
-        const signature = await wallet.provider.request({
-          method: 'signMessage',
-          params: {
-            address: wallet.address,
-            message: message
-          }
+        // Use Sats Connect to sign message
+        const response = await request('signMessage', {
+          address: wallet.address,
+          message: message
         });
         
-        console.log('Bitcoin message signed successfully:', signature);
-        return signature;
+        if (response.status === 'success') {
+          console.log('✅ Bitcoin message signed successfully:', response.result.signature);
+          return response.result.signature;
+        } else {
+          if (response.error.code === 'USER_REJECTION') {
+            throw new Error('User rejected the signature request');
+          } else {
+            throw new Error(`Signature failed: ${response.error.message}`);
+          }
+        }
       }
       
       throw new Error('Invalid wallet type for Bitcoin signing');
     } catch (error) {
-      console.error('Bitcoin message signing failed:', error);
+      console.error('❌ Bitcoin message signing failed:', error);
       throw new Error(`Failed to sign Bitcoin message: ${error.message}`);
     }
   }
@@ -446,8 +430,9 @@ class WalletService {
   }
 
   isBitcoinWalletAvailable() {
-    return typeof window !== 'undefined' && 
-           window.XverseProviders?.BitcoinProvider;
+    // Sats Connect is imported as a module, so it's always available
+    // The actual wallet availability is checked during connection
+    return true;
   }
 
   isLiskWalletAvailable() {

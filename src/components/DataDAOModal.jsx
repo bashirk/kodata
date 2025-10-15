@@ -25,11 +25,12 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { walletService } from '../lib/walletService'
+import { apiService } from '../lib/apiService'
 import { AdminDashboard } from './AdminDashboard'
 import { UserDashboard } from './UserDashboard'
 
 export function DataDAOModal({ isOpen, onClose }) {
-  const { user, isAuthenticated, login, disconnectWallet, createSubmission, isLoading } = useAuth()
+  const { user, isAuthenticated, login, disconnectWallet, createSubmission, isLoading, setUser } = useAuth()
   const [step, setStep] = useState(1)
   const [contributionType, setContributionType] = useState('')
   const [formData, setFormData] = useState({
@@ -63,6 +64,11 @@ export function DataDAOModal({ isOpen, onClose }) {
   const [bitcoinWallet, setBitcoinWallet] = useState(null)
   const [runesBalance, setRunesBalance] = useState(0)
   const [votingPower, setVotingPower] = useState(0)
+  
+  // Debug: Log bitcoinWallet state changes
+  useEffect(() => {
+    console.log('🔍 Bitcoin wallet state changed:', bitcoinWallet)
+  }, [bitcoinWallet])
 
   const contributionTypes = [
     {
@@ -122,16 +128,12 @@ export function DataDAOModal({ isOpen, onClose }) {
       
       console.log('🔗 Starting Bitcoin wallet connection...')
       
-      // Check if xVerse is available
+      // Check if window is available (for browser environment)
       if (typeof window === 'undefined') {
         throw new Error('Window object not available')
       }
       
-      if (!window.XverseProviders?.BitcoinProvider) {
-        throw new Error('xVerse Bitcoin provider not found. Please install xVerse wallet and refresh the page.')
-      }
-      
-      console.log('✅ xVerse Bitcoin provider detected')
+      console.log('✅ Sats Connect module loaded')
       
       // Connect Bitcoin wallet
       const bitcoinWallet = await walletService.connectBitcoinWallet()
@@ -151,13 +153,12 @@ export function DataDAOModal({ isOpen, onClose }) {
       const signature = await walletService.signBitcoinMessage(message, bitcoinWallet)
       console.log('✅ Message signed:', signature)
       
-      // Register with backend
-      console.log('📝 Registering with backend...')
-      const response = await fetch('/api/runes/register', {
+      // Authenticate with Bitcoin Runes (creates user account if needed)
+      console.log('📝 Authenticating with Bitcoin Runes...')
+      const response = await fetch('http://localhost:3001/api/runes/auth', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           btcAddress: bitcoinWallet.address,
@@ -170,6 +171,29 @@ export function DataDAOModal({ isOpen, onClose }) {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.error || `Backend error: ${response.status}`)
+      }
+      
+      const authData = await response.json()
+      console.log('✅ Bitcoin Runes authentication successful:', authData)
+      
+      // Store the JWT token for future API calls
+      localStorage.setItem('auth_token', authData.token)
+      
+      // Update user state in auth context
+      if (setUser && authData.user) {
+        setUser(authData.user)
+        console.log('✅ User state updated:', authData.user)
+      }
+      
+      // Also refresh user profile from backend to get complete data
+      try {
+        const userProfile = await apiService.getUserProfile()
+        if (userProfile && setUser) {
+          setUser(userProfile)
+          console.log('✅ User profile refreshed:', userProfile)
+        }
+      } catch (error) {
+        console.log('⚠️ Could not refresh user profile:', error.message)
       }
       
       console.log('✅ Bitcoin wallet registered successfully')
@@ -195,6 +219,14 @@ export function DataDAOModal({ isOpen, onClose }) {
     } finally {
       setIsLoggingIn(false)
     }
+  }
+
+  const handleBitcoinDisconnect = () => {
+    setBitcoinWallet(null)
+    setRunesBalance(0)
+    setVotingPower(0)
+    setWalletConnectionStep(1)
+    console.log('🔌 Bitcoin wallet disconnected')
   }
 
   const handleSubmit = async (e) => {
@@ -348,27 +380,6 @@ export function DataDAOModal({ isOpen, onClose }) {
                     Connect your xVerse Bitcoin wallet to verify Runes ownership for DAO governance participation.
               </p>
               
-              {/* xVerse Detection */}
-              {typeof window !== 'undefined' && !window.XverseProviders?.BitcoinProvider && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
-                    <div className="text-sm text-yellow-800">
-                      <p className="font-medium">xVerse Wallet Required</p>
-                      <p>Please install xVerse wallet to connect Bitcoin wallet for Runes governance.</p>
-                      <a 
-                        href="https://www.xverse.app/" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-yellow-700 underline hover:text-yellow-900"
-                      >
-                        Install xVerse Wallet →
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               {loginError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                   <div className="flex items-start">
@@ -430,16 +441,52 @@ export function DataDAOModal({ isOpen, onClose }) {
                     Connect your xVerse Starknet wallet to earn MAD tokens for data contributions.
                   </p>
                   
+                  {!bitcoinWallet && walletConnectionStep === 2 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <AlertCircle className="h-5 w-5 text-yellow-600 mr-3" />
+                          <div className="text-sm text-yellow-800">
+                            <p className="font-medium">Bitcoin Wallet Not Connected</p>
+                            <p>Connect Bitcoin wallet to participate in DAO governance</p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setWalletConnectionStep(1)}
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                        >
+                          Reconnect Bitcoin
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   {/* Show Bitcoin connection status */}
                   {bitcoinWallet && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                      <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                        <div className="text-sm text-green-800">
-                          <p className="font-medium">Bitcoin Connected</p>
-                          <p>Address: {bitcoinWallet.address.slice(0, 8)}...{bitcoinWallet.address.slice(-8)}</p>
-                          <p>Runes Balance: {runesBalance} | Voting Power: {votingPower}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                          <div className="text-sm text-green-800">
+                            <p className="font-medium">Bitcoin Connected</p>
+                            <p>Address: {bitcoinWallet.address.slice(0, 8)}...{bitcoinWallet.address.slice(-8)}</p>
+                            <p>Runes Balance: {runesBalance} | Voting Power: {votingPower}</p>
+                            {runesBalance > 0 && (
+                              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                             
+                              </div>
+                            )}
+                          </div>
                         </div>
+                        <Button
+                          onClick={handleBitcoinDisconnect}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 border-red-300 hover:bg-red-50"
+                        >
+                          Disconnect
+                        </Button>
                       </div>
                     </div>
                   )}

@@ -32,10 +32,15 @@ export function GovernanceDashboard({ isOpen, onClose }) {
   const [selectedProposal, setSelectedProposal] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [votingHistory, setVotingHistory] = useState([])
   const [governanceStats, setGovernanceStats] = useState(null)
 
+  // Check if user has test Runes (demo mode)
+  const hasTestRunes = user?.runesBalance && parseInt(user.runesBalance) > 0
+  const isDemoMode = hasTestRunes && user?.runesRuneId === 'TEST:DEMO'
+  
   // Create proposal form state
   const [proposalForm, setProposalForm] = useState({
     title: '',
@@ -55,7 +60,7 @@ export function GovernanceDashboard({ isOpen, onClose }) {
   const loadProposals = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/governance/proposals')
+      const response = await fetch('http://localhost:3001/api/governance/proposals')
       const data = await response.json()
       setProposals(data.proposals || [])
     } catch (error) {
@@ -67,7 +72,7 @@ export function GovernanceDashboard({ isOpen, onClose }) {
 
   const loadVotingHistory = async () => {
     try {
-      const response = await fetch(`/api/governance/voting-history/${user?.id}`, {
+      const response = await fetch(`http://localhost:3001/api/governance/voting-history/${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
@@ -81,7 +86,7 @@ export function GovernanceDashboard({ isOpen, onClose }) {
 
   const loadGovernanceStats = async () => {
     try {
-      const response = await fetch('/api/governance/stats')
+      const response = await fetch('http://localhost:3001/api/governance/stats')
       const data = await response.json()
       setGovernanceStats(data)
     } catch (error) {
@@ -102,7 +107,7 @@ export function GovernanceDashboard({ isOpen, onClose }) {
       const signature = await walletService.signBitcoinMessage(message, bitcoinWallet)
 
       // Submit vote
-      const response = await fetch(`/api/governance/proposals/${proposalId}/vote`, {
+      const response = await fetch(`http://localhost:3001/api/governance/proposals/${proposalId}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,10 +123,16 @@ export function GovernanceDashboard({ isOpen, onClose }) {
         throw new Error('Failed to submit vote')
       }
 
+      // Show success message
+      setSuccessMessage(`✅ Vote submitted successfully! (${support ? 'FOR' : 'AGAINST'})`)
+      setError('')
+      
       // Reload proposals to show updated counts
       loadProposals()
       loadVotingHistory()
-      setError('')
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000)
     } catch (error) {
       setError(error.message)
     }
@@ -130,7 +141,7 @@ export function GovernanceDashboard({ isOpen, onClose }) {
   const handleCreateProposal = async (e) => {
     e.preventDefault()
     try {
-      const response = await fetch('/api/governance/proposals', {
+      const response = await fetch('http://localhost:3001/api/governance/proposals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,13 +154,26 @@ export function GovernanceDashboard({ isOpen, onClose }) {
         throw new Error('Failed to create proposal')
       }
 
+      // Show success message
+      setSuccessMessage('✅ Proposal created successfully!')
+      setError('')
+      
       // Reset form and reload proposals
       setProposalForm({ title: '', description: '', proposalType: 'DATA_CURATION', duration: 7 })
       setShowCreateForm(false)
       loadProposals()
-      setError('')
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000)
     } catch (error) {
-      setError(error.message)
+      // Provide better error messages for common issues
+      if (error.message.includes('Insufficient Runes balance')) {
+        setError('You need at least 100 Runes to create proposals. Connect your Bitcoin wallet to get test Runes for demo purposes.')
+      } else if (error.message.includes('Bitcoin wallet not connected')) {
+        setError('Please connect your Bitcoin wallet first to participate in governance.')
+      } else {
+        setError(error.message)
+      }
     }
   }
 
@@ -213,14 +237,29 @@ export function GovernanceDashboard({ isOpen, onClose }) {
           {/* Wallet Status */}
           {user?.btcAddress ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                <div>
-                  <p className="font-medium text-green-800">Bitcoin Wallet Connected</p>
-                  <p className="text-sm text-green-700">
-                    {user.runesBalance || 0} Runes | {user.votingPower || 0} Voting Power
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                  <div>
+                    <p className="font-medium text-green-800">Bitcoin Wallet Connected</p>
+                    <p className="text-sm text-green-700">
+                      {user.runesBalance || 0} Runes | {user.votingPower || 0} Voting Power
+                    </p>
+                    {isDemoMode && (
+                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                        <p className="text-xs text-blue-700">
+                          🧪 <strong>Demo Mode:</strong> Using test Runes for demonstration. 
+                          You can create proposals and vote with these test Runes!
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
+                {isDemoMode && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    Demo Mode
+                  </Badge>
+                )}
               </div>
             </div>
           ) : (
@@ -245,6 +284,19 @@ export function GovernanceDashboard({ isOpen, onClose }) {
                 <div className="text-sm text-red-800">
                   <p className="font-medium">Error</p>
                   <p>{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Display */}
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
+                <div className="text-sm text-green-800">
+                  <p className="font-medium">Success</p>
+                  <p>{successMessage}</p>
                 </div>
               </div>
             </div>
@@ -380,7 +432,14 @@ export function GovernanceDashboard({ isOpen, onClose }) {
                 <CardHeader>
                   <CardTitle>Create New Proposal</CardTitle>
                   <CardDescription>
-                    Propose changes to the DAO. You need at least 100 Runes to create proposals.
+                    {isDemoMode ? (
+                      <span className="text-blue-700">
+                        🧪 <strong>Demo Mode:</strong> You can create proposals with your test Runes! 
+                        In production, you'd need at least 100 real Runes.
+                      </span>
+                    ) : (
+                      'Propose changes to the DAO. You need at least 100 Runes to create proposals.'
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -140,7 +140,7 @@ export function DataDAOModal({ isOpen, onClose }) {
       
       // Verify Runes balance
       console.log('🔍 Verifying Runes balance...')
-      const runesData = await walletService.verifyRunesBalance(bitcoinWallet.address, '840000:3') // Default Rune ID
+      const runesData = await walletService.verifyRunesBalance(bitcoinWallet.address) // Get all Runes
       console.log('✅ Runes data:', runesData)
       setRunesBalance(runesData.balance)
       setVotingPower(Math.floor(runesData.balance / 100))
@@ -163,7 +163,7 @@ export function DataDAOModal({ isOpen, onClose }) {
           btcAddress: bitcoinWallet.address,
           signature: signature,
           message: message,
-          runeId: '840000:3'
+          runeId: runesData.runeId
         })
       })
       

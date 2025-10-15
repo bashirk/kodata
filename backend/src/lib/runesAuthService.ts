@@ -23,33 +23,60 @@ export class RunesAuthService {
   }
 
   /**
-   * Verify Runes balance for a Bitcoin address using Hiro Ordinals API
+   * Verify Runes balance for a Bitcoin address using SecretKey Labs API
    */
   async verifyRunesBalance(btcAddress: string, runeId?: string): Promise<RunesBalance> {
     try {
       console.log(`🔍 Verifying Runes balance for address: ${btcAddress}, runeId: ${runeId}`);
       
-      // Query Hiro Ordinals API for Runes balance
-      const response = await fetch(`https://api.hiro.so/ordinals/v1/runes/balances/${btcAddress}`);
+      // Query SecretKey Labs API for Runes balance
+      const apiKey = process.env.SECRETKEY_API_KEY || process.env.HIRO_API_KEY;
+      const url = runeId 
+        ? `https://api.secretkeylabs.io/v2/runes/address/${btcAddress}/balance?runeId=${runeId}`
+        : `https://api.secretkeylabs.io/v2/runes/address/${btcAddress}/balance`;
       
-      if (!response.ok) {
-        throw new Error(`Hiro API error: ${response.status}`);
+      const headers: HeadersInit = {
+        'Accept': 'application/json'
+      };
+      
+      if (apiKey) {
+        headers['x-api-key'] = apiKey;
       }
       
-      const data = await response.json() as { results?: Array<{ rune: { id: string }, balance: string }> };
-      console.log('📊 Hiro API response:', data);
+      const response = await fetch(url, { headers });
+      
+      if (!response.ok) {
+        throw new Error(`SecretKey Labs API error: ${response.status}`);
+      }
+      
+      const data = await response.json() as { 
+        balances?: Array<{ 
+          runeId: string, 
+          symbol: string, 
+          runeName: string,
+          confirmedBalance: string,
+          availableBalance: string,
+          projectedBalance: string
+        }>,
+        indexerHeight: number
+      };
+      
+      console.log('📊 SecretKey Labs API response:', data);
       
       // Find the specific Rune balance
-      if (data.results && data.results.length > 0) {
-        const runeBalance = data.results.find((r) => r.rune.id === runeId);
-        const balance = runeBalance ? parseInt(runeBalance.balance) : 0;
+      if (data.balances && data.balances.length > 0) {
+        const runeBalance = runeId 
+          ? data.balances.find((r) => r.runeId === runeId)
+          : data.balances[0]; // Use first Rune if no specific ID provided
         
-        console.log(`✅ Runes balance for ${runeId}: ${balance}`);
+        const balance = runeBalance ? parseInt(runeBalance.confirmedBalance) : 0;
+        
+        console.log(`✅ Runes balance for ${runeBalance?.runeId || 'first rune'}: ${balance}`);
         return {
           balance,
-          runeId: runeId || '',
+          runeId: runeBalance?.runeId || runeId || '',
           address: btcAddress,
-          allRunes: data.results
+          allRunes: data.balances
         };
       }
       

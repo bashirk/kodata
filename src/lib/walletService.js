@@ -365,40 +365,51 @@ class WalletService {
 
   async verifyRunesBalance(address, runeId) {
     try {
-      console.log(`Verifying Runes balance for address: ${address}, runeId: ${runeId}`);
+      console.log(`🔍 Verifying Runes balance for address: ${address}, runeId: ${runeId}`);
       
-      // Query Hiro Ordinals API for Runes balance
-      const response = await fetch(`https://api.hiro.so/ordinals/v1/runes/balances/${address}`);
+      // Query SecretKey Labs API for Runes balance
+      const url = runeId 
+        ? `https://api.secretkeylabs.io/v2/runes/address/${address}/balance?runeId=${runeId}`
+        : `https://api.secretkeylabs.io/v2/runes/address/${address}/balance`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       
       if (!response.ok) {
-        throw new Error(`Hiro API error: ${response.status}`);
+        throw new Error(`SecretKey Labs API error: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('Hiro API response:', data);
+      console.log('📊 SecretKey Labs API response:', data);
       
       // Find the specific Rune balance
-      if (data.results && data.results.length > 0) {
-        const runeBalance = data.results.find(r => r.rune.id === runeId);
-        const balance = runeBalance ? parseInt(runeBalance.balance) : 0;
+      if (data.balances && data.balances.length > 0) {
+        const runeBalance = runeId 
+          ? data.balances.find((r) => r.runeId === runeId)
+          : data.balances[0]; // Use first Rune if no specific ID provided
         
-        console.log(`Runes balance for ${runeId}: ${balance}`);
+        const balance = runeBalance ? parseInt(runeBalance.confirmedBalance) : 0;
+        
+        console.log(`✅ Runes balance for ${runeBalance?.runeId || 'first rune'}: ${balance}`);
         return {
           balance,
-          runeId,
-          address,
-          allRunes: data.results
+          runeId: runeBalance?.runeId || runeId || '',
+          address: address,
+          allRunes: data.balances
         };
       }
       
       return {
         balance: 0,
-        runeId,
-        address,
+        runeId: runeId || '',
+        address: address,
         allRunes: []
       };
     } catch (error) {
-      console.error('Runes balance verification failed:', error);
+      console.error('❌ Runes balance verification failed:', error);
       throw new Error(`Failed to verify Runes balance: ${error.message}`);
     }
   }

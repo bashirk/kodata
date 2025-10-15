@@ -8,6 +8,8 @@ import { StarknetService } from './lib/starknetService';
 import { LiskService } from './lib/liskService';
 import { MADTokenService } from './lib/madTokenService';
 import { DataCurationService } from './lib/dataCurationService';
+import { RunesAuthService } from './lib/runesAuthService';
+import { GovernanceService } from './lib/governanceService';
 import PrismaSingleton from './lib/prisma';
 
 // Extend Express Request interface to include user
@@ -27,6 +29,8 @@ const starknetService = new StarknetService();
 const liskService = new LiskService();
 const madTokenService = new MADTokenService();
 const dataCurationService = new DataCurationService();
+const runesAuthService = new RunesAuthService();
+const governanceService = new GovernanceService();
 
 // Middleware
 app.use(cors({
@@ -805,6 +809,251 @@ app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
     }
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process manual reward' });
+  }
+});
+
+// Runes Authentication endpoints
+app.post('/api/runes/register', authenticateToken, async (req, res) => {
+  try {
+    const { btcAddress, signature, message, runeId } = req.body;
+    
+    if (!btcAddress || !signature || !message) {
+      return res.status(400).json({ error: 'Bitcoin address, signature, and message are required' });
+    }
+    
+    const result = await runesAuthService.registerRunesHolder(req.user.id, {
+      btcAddress,
+      signature,
+      message,
+      runeId
+    });
+    
+    return res.json({
+      success: true,
+      user: result.user,
+      runesData: result.runesData,
+      votingPower: result.votingPower,
+      message: 'Runes holder registered successfully'
+    });
+  } catch (error) {
+    console.error('Runes registration error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to register Runes holder',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get('/api/runes/balance/:address', async (req, res) => {
+  try {
+    const { address } = req.params;
+    const { runeId } = req.query;
+    
+    const runesData = await runesAuthService.verifyRunesBalance(address, runeId as string);
+    
+    return res.json(runesData);
+  } catch (error) {
+    console.error('Runes balance error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to get Runes balance',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post('/api/runes/sync', authenticateToken, async (req, res) => {
+  try {
+    const result = await runesAuthService.syncRunesBalance(req.user.id);
+    
+    return res.json({
+      success: true,
+      user: result.user,
+      runesData: result.runesData,
+      votingPower: result.votingPower,
+      message: 'Runes balance synced successfully'
+    });
+  } catch (error) {
+    console.error('Runes sync error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to sync Runes balance',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get('/api/runes/holders', authenticateToken, async (req, res) => {
+  try {
+    const holders = await runesAuthService.getRunesHolders();
+    
+    return res.json({ holders });
+  } catch (error) {
+    console.error('Runes holders error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to get Runes holders',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Governance endpoints
+app.post('/api/governance/proposals', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, proposalType, duration, metadata } = req.body;
+    
+    if (!title || !description || !proposalType) {
+      return res.status(400).json({ error: 'Title, description, and proposal type are required' });
+    }
+    
+    const proposal = await governanceService.createProposal({
+      title,
+      description,
+      proposalType,
+      duration,
+      metadata
+    }, req.user.id);
+    
+    return res.json({
+      success: true,
+      proposal,
+      message: 'Proposal created successfully'
+    });
+  } catch (error) {
+    console.error('Proposal creation error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to create proposal',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get('/api/governance/proposals', async (req, res) => {
+  try {
+    const { status, proposalType, proposer } = req.query;
+    
+    const filter: any = {};
+    if (status) filter.status = status;
+    if (proposalType) filter.proposalType = proposalType;
+    if (proposer) filter.proposer = proposer;
+    
+    const proposals = await governanceService.getProposals(filter);
+    
+    return res.json({ proposals });
+  } catch (error) {
+    console.error('Get proposals error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to get proposals',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get('/api/governance/proposals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await governanceService.getProposalResults(id);
+    
+    return res.json(result);
+  } catch (error) {
+    console.error('Get proposal error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to get proposal',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post('/api/governance/proposals/:id/vote', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { support, btcSignature } = req.body;
+    
+    if (typeof support !== 'boolean' || !btcSignature) {
+      return res.status(400).json({ error: 'Support (boolean) and Bitcoin signature are required' });
+    }
+    
+    const result = await governanceService.vote({
+      proposalId: id,
+      support,
+      btcSignature
+    }, req.user.id);
+    
+    return res.json({
+      success: true,
+      vote: result.vote,
+      updatedCounts: result.updatedCounts,
+      message: 'Vote submitted successfully'
+    });
+  } catch (error) {
+    console.error('Vote submission error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to submit vote',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post('/api/governance/proposals/:id/execute', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if user is admin
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const proposal = await governanceService.executeProposal(id, req.user.id);
+    
+    return res.json({
+      success: true,
+      proposal,
+      message: 'Proposal executed successfully'
+    });
+  } catch (error) {
+    console.error('Proposal execution error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to execute proposal',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get('/api/governance/voting-history/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Users can only see their own voting history
+    if (userId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const votingHistory = await governanceService.getUserVotingHistory(userId);
+    
+    return res.json({ votingHistory });
+  } catch (error) {
+    console.error('Voting history error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to get voting history',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.get('/api/governance/stats', async (req, res) => {
+  try {
+    const stats = await governanceService.getGovernanceStats();
+    
+    return res.json(stats);
+  } catch (error) {
+    console.error('Governance stats error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to get governance stats',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 

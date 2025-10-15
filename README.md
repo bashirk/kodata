@@ -4,16 +4,18 @@ A modern, responsive community website for KoData's DataDAO initiative with full
 
 ## 🌟 Overview
 
-KoData is a youth-focused data literacy and context engineering initiative that trains secondary school students in underserved African communities on big data and Web3 skills, while building an open local dataset library for developers and enterprise AI training.
+KoData is a youth-focused data literacy and context engineering initiative that trains secondary school students in underserved African communities on big data and Web3 skills, while building an open local dataset library for developers and enterprise AI training. **Now featuring Bitcoin Runes DAO governance** for community-driven decision making.
 
 ## 🚀 Features
 
 ### Core Functionality
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Web3 Integration**: Full blockchain backend with Starknet and Lisk support
-- **Wallet Authentication**: Connect Starknet (Xverse) and Lisk wallets
+- **Dual-Chain Architecture**: Bitcoin Runes for governance + Starknet for MAD token rewards
+- **XVerse Wallet Integration**: Seamless Bitcoin and Starknet wallet connection
+- **Bitcoin Runes DAO Governance**: Community voting with Runes-based voting power
 - **Interactive DataDAO Modal**: Multi-step form for data contribution with real submissions
 - **Cross-Chain Reputation**: Earn reputation on Lisk for approved submissions
+- **Gasless Voting**: Vote on proposals without transaction fees
 - **Animated Statistics**: Eye-catching counters with intersection observer
 - **Contact Form**: Professional contact form with validation
 - **Smooth Navigation**: Scroll-to-section navigation with mobile menu
@@ -51,8 +53,9 @@ KoData is a youth-focused data literacy and context engineering initiative that 
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
 - **Cache**: Redis (BullMQ)
-- **Blockchain**: Starknet.js + Lisk SDK
-- **Authentication**: Wallet signature verification
+- **Blockchain**: Starknet.js + Lisk SDK + Bitcoin Runes (Hiro API)
+- **Authentication**: Multi-chain wallet signature verification
+- **Governance**: Bitcoin Runes-based DAO voting system
 
 ## 📦 Quick Start
 
@@ -171,17 +174,26 @@ kodata-website/
 
 ## 🌍 DataDAO Features
 
-The website showcases KoData's DataDAO (Decentralized Autonomous Organization) with full web3 integration:
+The website showcases KoData's DataDAO (Decentralized Autonomous Organization) with full web3 integration and **Bitcoin Runes governance**:
 
-### Blockchain Integration
-- **Starknet**: Payment processing and task management
-- **Lisk**: Reputation system and governance
+### Dual-Chain Architecture
+- **Bitcoin**: Runes-based governance and voting power
+- **Starknet**: MAD token rewards and task management
+- **Lisk**: Reputation system and cross-chain integration
 - **Cross-Chain**: Automatic reputation updates via relayer
 
 ### Wallet Support
-- **Starknet Wallets**: Xverse, Argent, Braavos
-- **Lisk Wallets**: Lisk Desktop, Web Wallet
-- **Authentication**: Signature-based login system
+- **xVerse Wallet**: Native Bitcoin + Starknet support
+- **Bitcoin**: Runes balance verification via Hiro API
+- **Starknet**: MAD token storage and transactions
+- **Authentication**: Multi-chain signature-based login system
+
+### DAO Governance Features
+- **Runes-Based Voting**: Voting power determined by Bitcoin Runes balance
+- **Gasless Voting**: Vote without transaction fees using Bitcoin signatures
+- **Proposal Types**: Treasury, Governance, Technical, Data Curation
+- **Transparent Results**: All votes and results publicly visible
+- **Quorum Requirements**: Minimum participation thresholds
 
 ### Reward System
 1. **Data Submission** (Up to 100 MAD tokens)

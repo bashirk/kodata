@@ -24,6 +24,7 @@ import {
   Shield
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { walletService } from '../lib/walletService'
 import { AdminDashboard } from './AdminDashboard'
 import { UserDashboard } from './UserDashboard'
 
@@ -58,6 +59,10 @@ export function DataDAOModal({ isOpen, onClose }) {
   // Check if user is admin
   const isAdmin = user?.role === 'ADMIN' || user?.isAdmin === true
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [walletConnectionStep, setWalletConnectionStep] = useState(1) // 1: Bitcoin, 2: Starknet
+  const [bitcoinWallet, setBitcoinWallet] = useState(null)
+  const [runesBalance, setRunesBalance] = useState(0)
+  const [votingPower, setVotingPower] = useState(0)
 
   const contributionTypes = [
     {
@@ -110,11 +115,81 @@ export function DataDAOModal({ isOpen, onClose }) {
     }))
   }
 
-  const handleWalletLogin = async (walletType) => {
+  const handleBitcoinWalletLogin = async () => {
     try {
       setIsLoggingIn(true)
       setLoginError('')
-      await login(walletType)
+      
+      console.log('🔗 Starting Bitcoin wallet connection...')
+      
+      // Check if xVerse is available
+      if (typeof window === 'undefined') {
+        throw new Error('Window object not available')
+      }
+      
+      if (!window.XverseProviders?.BitcoinProvider) {
+        throw new Error('xVerse Bitcoin provider not found. Please install xVerse wallet and refresh the page.')
+      }
+      
+      console.log('✅ xVerse Bitcoin provider detected')
+      
+      // Connect Bitcoin wallet
+      const bitcoinWallet = await walletService.connectBitcoinWallet()
+      console.log('✅ Bitcoin wallet connected:', bitcoinWallet)
+      setBitcoinWallet(bitcoinWallet)
+      
+      // Verify Runes balance
+      console.log('🔍 Verifying Runes balance...')
+      const runesData = await walletService.verifyRunesBalance(bitcoinWallet.address, '840000:3') // Default Rune ID
+      console.log('✅ Runes data:', runesData)
+      setRunesBalance(runesData.balance)
+      setVotingPower(Math.floor(runesData.balance / 100))
+      
+      // Sign message to prove ownership
+      console.log('✍️ Signing ownership message...')
+      const message = `Verify Runes ownership for KoData DAO at ${Date.now()}`
+      const signature = await walletService.signBitcoinMessage(message, bitcoinWallet)
+      console.log('✅ Message signed:', signature)
+      
+      // Register with backend
+      console.log('📝 Registering with backend...')
+      const response = await fetch('/api/runes/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          btcAddress: bitcoinWallet.address,
+          signature: signature,
+          message: message,
+          runeId: '840000:3'
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Backend error: ${response.status}`)
+      }
+      
+      console.log('✅ Bitcoin wallet registered successfully')
+      
+      // Move to Starknet connection step
+      setWalletConnectionStep(2)
+      
+    } catch (error) {
+      console.error('❌ Bitcoin wallet connection failed:', error)
+      setLoginError(error.message)
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
+  const handleStarknetWalletLogin = async () => {
+    try {
+      setIsLoggingIn(true)
+      setLoginError('')
+      await login('starknet')
     } catch (error) {
       setLoginError(error.message)
     } finally {
@@ -265,10 +340,34 @@ export function DataDAOModal({ isOpen, onClose }) {
                   <Wallet className="h-8 w-8 text-white" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Wallet</h3>
+              
+              {walletConnectionStep === 1 ? (
+                <>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Bitcoin Wallet</h3>
               <p className="text-gray-600 mb-6">
-                Connect your Web3 wallet to start contributing to our DataDAO and earn MAD tokens.
+                    Connect your xVerse Bitcoin wallet to verify Runes ownership for DAO governance participation.
               </p>
+              
+              {/* xVerse Detection */}
+              {typeof window !== 'undefined' && !window.XverseProviders?.BitcoinProvider && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="text-sm text-yellow-800">
+                      <p className="font-medium">xVerse Wallet Required</p>
+                      <p>Please install xVerse wallet to connect Bitcoin wallet for Runes governance.</p>
+                      <a 
+                        href="https://www.xverse.app/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-yellow-700 underline hover:text-yellow-900"
+                      >
+                        Install xVerse Wallet →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {loginError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -284,38 +383,112 @@ export function DataDAOModal({ isOpen, onClose }) {
 
               <div className="space-y-4">
                 <Button 
-                  onClick={() => handleWalletLogin('starknet')}
+                      onClick={handleBitcoinWalletLogin}
+                      disabled={isLoggingIn}
+                      className="w-full bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700 text-white"
+                    >
+                      {isLoggingIn ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Connecting Bitcoin...
+                        </div>
+                      ) : (
+                        <>
+                          <Wallet className="mr-2 h-4 w-4" />
+                          Connect Bitcoin Wallet (Runes)
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => setWalletConnectionStep(2)}
+                      variant="outline"
+                      className="w-full border-gray-300 text-gray-700 hover:border-gray-400"
+                    >
+                      Skip Bitcoin → Connect Starknet Only
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => {
+                        // Manual connection - just proceed to Starknet
+                        setWalletConnectionStep(2);
+                        setBitcoinWallet({ address: 'Manual Connection', type: 'bitcoin' });
+                        setRunesBalance(0);
+                        setVotingPower(0);
+                      }}
+                      variant="outline"
+                      className="w-full border-blue-300 text-blue-700 hover:border-blue-400"
+                    >
+                      Manual Connection → Continue to Starknet
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Starknet Wallet</h3>
+                  <p className="text-gray-600 mb-6">
+                    Connect your xVerse Starknet wallet to earn MAD tokens for data contributions.
+                  </p>
+                  
+                  {/* Show Bitcoin connection status */}
+                  {bitcoinWallet && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                        <div className="text-sm text-green-800">
+                          <p className="font-medium">Bitcoin Connected</p>
+                          <p>Address: {bitcoinWallet.address.slice(0, 8)}...{bitcoinWallet.address.slice(-8)}</p>
+                          <p>Runes Balance: {runesBalance} | Voting Power: {votingPower}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {loginError && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-start">
+                        <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div className="text-sm text-red-800">
+                          <p className="font-medium">Connection Failed</p>
+                          <p>{loginError}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <Button 
+                      onClick={handleStarknetWalletLogin}
                   disabled={isLoggingIn}
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                 >
                   {isLoggingIn ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Connecting...
+                          Connecting Starknet...
                     </div>
                   ) : (
                     <>
                       <Wallet className="mr-2 h-4 w-4" />
-                      Connect Wallet
+                          Connect Starknet Wallet (MAD Tokens)
                     </>
                   )}
                 </Button>
 
-                {/* Lisk wallet temporarily hidden */}
-                {/* <Button 
-                  onClick={() => handleWalletLogin('lisk')}
-                  disabled={isLoggingIn}
+                    <Button 
+                      onClick={() => setWalletConnectionStep(1)}
                   variant="outline"
-                  className="w-full border-2 border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50"
+                      className="w-full border-gray-300 text-gray-700 hover:border-gray-400"
                 >
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Connect Lisk Wallet
-                </Button> */}
+                      ← Back to Bitcoin Connection
+                    </Button>
               </div>
+                </>
+              )}
 
               <div className="mt-6 text-sm text-gray-500">
-                <p className="mb-2">Don't have a wallet?</p>
-                <div className="flex justify-center space-x-4">
+                <p className="mb-2">Don't have xVerse wallet?</p>
+                <div className="flex justify-center">
                   <a 
                     href="https://www.xverse.app/" 
                     target="_blank" 
@@ -323,18 +496,8 @@ export function DataDAOModal({ isOpen, onClose }) {
                     className="text-blue-600 hover:text-blue-700 flex items-center"
                   >
                     <Download className="h-4 w-4 mr-1" />
-                    Get Xverse
+                    Get xVerse Wallet
                   </a>
-                  {/* Lisk download link temporarily hidden */}
-                  {/* <a 
-                    href="https://lisk.com/desktop" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-purple-600 hover:text-purple-700 flex items-center"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Get Lisk Desktop
-                  </a> */}
                 </div>
               </div>
             </div>
@@ -350,22 +513,47 @@ export function DataDAOModal({ isOpen, onClose }) {
                 Welcome back! Your wallet is connected and ready to contribute.
               </p>
               
-              {/* Wallet Info */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              {/* Dual Wallet Info */}
+              <div className="space-y-3 mb-6">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="text-sm text-gray-600">Bitcoin Wallet (Runes)</p>
+                      <p className="font-mono text-sm text-gray-900">
+                        {user?.btcAddress ? 
+                          `${user.btcAddress.slice(0, 8)}...${user.btcAddress.slice(-8)}` : 
+                          'Not Connected'
+                        }
+                      </p>
+                      {user?.runesBalance && (
+                        <p className="text-xs text-orange-600">
+                          {user.runesBalance} Runes | {user.votingPower || 0} Voting Power
+                        </p>
+                      )}
+                    </div>
+                    <Badge className={`${user?.btcAddress ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {user?.btcAddress ? 'Connected' : 'Not Connected'}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-left">
-                    <p className="text-sm text-gray-600">Connected Wallet</p>
+                      <p className="text-sm text-gray-600">Starknet Wallet (MAD)</p>
                     <p className="font-mono text-sm text-gray-900">
                       {user?.starknetAddress ? 
                         `${user.starknetAddress.slice(0, 6)}...${user.starknetAddress.slice(-4)}` : 
-                        'Unknown'
+                          'Not Connected'
                       }
                     </p>
                   </div>
-                  <Badge className="bg-green-100 text-green-800">
+                    <Badge className={`${user?.starknetAddress ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    Connected
+                      {user?.starknetAddress ? 'Connected' : 'Not Connected'}
                   </Badge>
+                  </div>
                 </div>
               </div>
 

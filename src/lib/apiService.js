@@ -187,6 +187,70 @@ class ApiService {
   async healthCheck() {
     return this.request('/health');
   }
+
+  // Runes Authentication API methods
+  async registerRunesHolder(authData) {
+    return this.request('/api/runes/register', {
+      method: 'POST',
+      body: JSON.stringify(authData),
+    });
+  }
+
+  async getRunesBalance(address, runeId) {
+    const endpoint = runeId ? 
+      `/api/runes/balance/${address}?runeId=${runeId}` : 
+      `/api/runes/balance/${address}`;
+    return this.request(endpoint);
+  }
+
+  async syncRunesBalance() {
+    return this.request('/api/runes/sync', { method: 'POST' });
+  }
+
+  async getRunesHolders() {
+    return this.request('/api/runes/holders');
+  }
+
+  // Governance API methods
+  async createProposal(proposalData) {
+    return this.request('/api/governance/proposals', {
+      method: 'POST',
+      body: JSON.stringify(proposalData),
+    });
+  }
+
+  async getProposals(filter = {}) {
+    const queryParams = new URLSearchParams(filter).toString();
+    const endpoint = queryParams ? 
+      `/api/governance/proposals?${queryParams}` : 
+      '/api/governance/proposals';
+    return this.request(endpoint);
+  }
+
+  async getProposal(proposalId) {
+    return this.request(`/api/governance/proposals/${proposalId}`);
+  }
+
+  async voteOnProposal(proposalId, voteData) {
+    return this.request(`/api/governance/proposals/${proposalId}/vote`, {
+      method: 'POST',
+      body: JSON.stringify(voteData),
+    });
+  }
+
+  async executeProposal(proposalId) {
+    return this.request(`/api/governance/proposals/${proposalId}/execute`, {
+      method: 'POST',
+    });
+  }
+
+  async getVotingHistory(userId) {
+    return this.request(`/api/governance/voting-history/${userId}`);
+  }
+
+  async getGovernanceStats() {
+    return this.request('/api/governance/stats');
+  }
 }
 
 export const apiService = new ApiService();

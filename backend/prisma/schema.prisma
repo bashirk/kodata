@@ -20,6 +20,10 @@ model User {
   starknetAddress String?
   liskAddress    String?    // Lisk address (e.g., base32 format)
   btcAddress     String?
+  runesBalance   String?   // Verified Runes balance
+  runesRuneId    String?   // Which Rune they hold
+  votingPower    Int       @default(0) // Based on Runes balance
+  lastRunesSync  DateTime? // Last balance check
   reputation     Int       @default(0)
   role           UserRole  @default(USER)
   isAdmin        Boolean   @default(false)
@@ -31,6 +35,8 @@ model User {
   transactions   Transaction[]
   submissions    Submission[]
   storage        Storage[]
+  proposals      Proposal[]
+  votes          Vote[]
 }
 
 model Transaction {
@@ -70,6 +76,54 @@ enum SubmissionStatus {
   APPROVED
   REJECTED
   CHALLENGED
+}
+
+model Proposal {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  proposalType    ProposalType
+  proposer        String   // User ID
+  startTime       DateTime
+  endTime         DateTime
+  forVotes        String   @default("0") // Vote count
+  againstVotes    String   @default("0")
+  executed        Boolean  @default(false)
+  status          ProposalStatus @default(ACTIVE)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  
+  votes           Vote[]
+  proposerUser    User     @relation(fields: [proposer], references: [id])
+}
+
+model Vote {
+  id            String   @id @default(uuid())
+  proposalId    String
+  userId        String
+  support       Boolean  // true = for, false = against
+  votingPower   Int      // Runes balance at vote time
+  btcSignature  String   // Bitcoin signature proof
+  createdAt     DateTime @default(now())
+  
+  proposal      Proposal @relation(fields: [proposalId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@unique([proposalId, userId])
+}
+
+enum ProposalType {
+  TREASURY
+  GOVERNANCE
+  TECHNICAL
+  DATA_CURATION
+}
+
+enum ProposalStatus {
+  ACTIVE
+  PASSED
+  REJECTED
+  EXECUTED
 }
 
 enum UserRole {

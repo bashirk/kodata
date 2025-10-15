@@ -30,7 +30,8 @@ import {
   Network,
   Cpu,
   CircuitBoard,
-  MapPin
+  MapPin,
+  Vote
 } from 'lucide-react'
 import { Navigation } from './components/Navigation.jsx'
 import { AnimatedCounter } from './components/AnimatedCounter.jsx'
@@ -38,6 +39,7 @@ import { FloatingActionButton } from './components/FloatingActionButton.jsx'
 import { ContactForm } from './components/ContactForm.jsx'
 import { PartnerForm } from './components/PartnerForm.jsx'
 import { DataDAOModal } from './components/DataDAOModal.jsx'
+import { GovernanceDashboard } from './components/GovernanceDashboard.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 
 import './App.css'
@@ -45,6 +47,7 @@ import './App.css'
 function App() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isDataDAOModalOpen, setIsDataDAOModalOpen] = useState(false)
+  const [isGovernanceModalOpen, setIsGovernanceModalOpen] = useState(false)
   const [showPartnerForm, setShowPartnerForm] = useState(false)
 
   useEffect(() => {
@@ -182,6 +185,8 @@ function App() {
         isLoaded={isLoaded}
         isDataDAOModalOpen={isDataDAOModalOpen}
         setIsDataDAOModalOpen={setIsDataDAOModalOpen}
+        isGovernanceModalOpen={isGovernanceModalOpen}
+        setIsGovernanceModalOpen={setIsGovernanceModalOpen}
         showPartnerForm={showPartnerForm}
         togglePartnerForm={togglePartnerForm}
         partners={partners}
@@ -195,11 +200,15 @@ function App() {
 }
 
 // Separate component that uses AuthContext
-function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showPartnerForm, togglePartnerForm, partners, programs, testimonials, dataDAOFeatures, scrollToSection }) {
+function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, isGovernanceModalOpen, setIsGovernanceModalOpen, showPartnerForm, togglePartnerForm, partners, programs, testimonials, dataDAOFeatures, scrollToSection }) {
   const { user, isAuthenticated } = useAuth()
   
   const openDataDAOModal = () => {
     setIsDataDAOModalOpen(true)
+  }
+
+  const openGovernanceModal = () => {
+    setIsGovernanceModalOpen(true)
   }
 
   if (!isLoaded) {
@@ -240,6 +249,10 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
        <DataDAOModal 
          isOpen={isDataDAOModalOpen} 
          onClose={() => setIsDataDAOModalOpen(false)} 
+       />
+       <GovernanceDashboard 
+         isOpen={isGovernanceModalOpen} 
+         onClose={() => setIsGovernanceModalOpen(false)} 
        />
 
        {/* Hero Section */}
@@ -302,6 +315,16 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+              </Button>
+
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="rounded-full border-2 border-orange-300 text-orange-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 px-8 py-4 font-semibold transition-all duration-300"
+                onClick={openGovernanceModal}
+              >
+                DAO Governance
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
 
               <Button 
@@ -773,6 +796,142 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                       <div className="text-sm text-purple-200">Learning</div>
                   </div>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Governance Section */}
+      <section id="governance" className="py-16 lg:py-20 bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-orange-400/20 to-yellow-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 lg:mb-16">
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-100 to-yellow-100 rounded-full mb-6">
+              <Vote className="w-4 h-4 mr-2 text-orange-600" />
+              <span className="text-sm font-medium text-gray-700">Community Governance</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              Bitcoin Runes
+              <span className="bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent"> DAO Governance</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Participate in decentralized decision-making with your Bitcoin Runes. Vote on platform policies,
+              data curation standards, and community initiatives while earning MAD tokens for contributions.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              {/* Governance Features */}
+              <div className="space-y-6">
+                {[
+                  {
+                    title: 'Runes-Based Voting',
+                    description: 'Your voting power is determined by your Bitcoin Runes balance. More Runes = more influence.',
+                    icon: <Vote className="h-6 w-6" />,
+                    color: 'from-orange-400 to-orange-500'
+                  },
+                  {
+                    title: 'Gasless Governance',
+                    description: 'Vote without paying transaction fees. Bitcoin signatures prove your identity.',
+                    icon: <Shield className="h-6 w-6" />,
+                    color: 'from-yellow-400 to-yellow-500'
+                  },
+                  {
+                    title: 'Transparent Proposals',
+                    description: 'All proposals, votes, and results are publicly visible on-chain.',
+                    icon: <CheckCircle className="h-6 w-6" />,
+                    color: 'from-orange-400 to-yellow-500'
+                  }
+                ].map((feature, index) => (
+                  <Card key={index} className="group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 bg-white/90 backdrop-blur-sm overflow-hidden">
+                    <CardContent className="relative p-6">
+                      <div className="flex items-start space-x-4">
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                          <div className="text-white">
+                            {feature.icon}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-gray-800 transition-colors duration-300">
+                            {feature.title}
+                          </h3>
+                          <p className="text-gray-600 leading-relaxed">
+                            {feature.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              {/* How Governance Works */}
+              <Card className="relative bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl overflow-hidden">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-orange-400/20 to-yellow-400/20 rounded-full blur-2xl"></div>
+
+                <CardHeader className="relative pb-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <Vote className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">How It Works</h3>
+                      <p className="text-orange-600 text-sm">Simple steps to participate</p>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="relative space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                        1
+                      </div>
+                      <div>
+                        <p className="text-gray-900 font-medium">Connect Bitcoin Wallet</p>
+                        <p className="text-orange-600 text-sm">Verify your Runes ownership</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                        2
+                      </div>
+                      <div>
+                        <p className="text-gray-900 font-medium">Review Proposals</p>
+                        <p className="text-yellow-600 text-sm">Read and understand proposals</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                        3
+                      </div>
+                      <div>
+                        <p className="text-gray-900 font-medium">Vote with Bitcoin</p>
+                        <p className="text-orange-600 text-sm">Sign your vote with Bitcoin wallet</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    size="lg" 
+                    className="w-full bg-gradient-to-r from-orange-600 via-yellow-600 to-orange-600 hover:from-orange-700 hover:via-yellow-700 hover:to-orange-700 text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                    onClick={openGovernanceModal}
+                  >
+                    <Vote className="mr-2 h-5 w-5" />
+                    {isAuthenticated ? "Open Governance Dashboard" : "Join Governance"}
+                  </Button>
                 </CardContent>
               </Card>
             </div>

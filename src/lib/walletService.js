@@ -301,10 +301,142 @@ class WalletService {
     }
   }
 
+  // Bitcoin wallet integration for Runes authentication
+  async connectBitcoinWallet() {
+    try {
+      console.log('🔗 Attempting to connect Bitcoin wallet for Runes authentication...');
+      
+      // Check if Xverse Bitcoin provider is available
+      if (typeof window === 'undefined') {
+        throw new Error('Window object not available');
+      }
+      
+      if (!window.XverseProviders?.BitcoinProvider) {
+        throw new Error('xVerse Bitcoin provider not found. Please install xVerse wallet and refresh the page.');
+      }
+      
+      console.log('✅ Xverse Bitcoin provider detected');
+      const bitcoinProvider = window.XverseProviders.BitcoinProvider;
+      
+      // Request Bitcoin accounts - try different methods
+      console.log('📋 Requesting Bitcoin accounts...');
+      
+      let accounts;
+      try {
+        // Try the standard method first with timeout
+        accounts = await Promise.race([
+          bitcoinProvider.request({
+            method: 'getAccounts'
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), 10000)
+          )
+        ]);
+      } catch (error) {
+        console.log('🔄 Trying alternative connection method...');
+        // Try alternative method
+        accounts = await Promise.race([
+          bitcoinProvider.request({
+            method: 'requestAccounts'
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), 10000)
+          )
+        ]);
+      }
+      
+      console.log('📋 Accounts response:', accounts);
+      
+      if (accounts && accounts.length > 0) {
+        console.log('✅ Bitcoin wallet connected:', accounts[0]);
+        return {
+          address: accounts[0],
+          provider: bitcoinProvider,
+          type: 'bitcoin'
+        };
+      }
+      
+      throw new Error('No Bitcoin accounts found. Please create an account in xVerse wallet.');
+    } catch (error) {
+      console.error('❌ Bitcoin wallet connection failed:', error);
+      throw new Error(`Failed to connect Bitcoin wallet: ${error.message}`);
+    }
+  }
+
+  async verifyRunesBalance(address, runeId) {
+    try {
+      console.log(`Verifying Runes balance for address: ${address}, runeId: ${runeId}`);
+      
+      // Query Hiro Ordinals API for Runes balance
+      const response = await fetch(`https://api.hiro.so/ordinals/v1/runes/balances/${address}`);
+      
+      if (!response.ok) {
+        throw new Error(`Hiro API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Hiro API response:', data);
+      
+      // Find the specific Rune balance
+      if (data.results && data.results.length > 0) {
+        const runeBalance = data.results.find(r => r.rune.id === runeId);
+        const balance = runeBalance ? parseInt(runeBalance.balance) : 0;
+        
+        console.log(`Runes balance for ${runeId}: ${balance}`);
+        return {
+          balance,
+          runeId,
+          address,
+          allRunes: data.results
+        };
+      }
+      
+      return {
+        balance: 0,
+        runeId,
+        address,
+        allRunes: []
+      };
+    } catch (error) {
+      console.error('Runes balance verification failed:', error);
+      throw new Error(`Failed to verify Runes balance: ${error.message}`);
+    }
+  }
+
+  async signBitcoinMessage(message, wallet) {
+    try {
+      console.log('Attempting to sign Bitcoin message:', message);
+      
+      if (wallet.type === 'bitcoin') {
+        // Sign message proving Bitcoin address ownership
+        const signature = await wallet.provider.request({
+          method: 'signMessage',
+          params: {
+            address: wallet.address,
+            message: message
+          }
+        });
+        
+        console.log('Bitcoin message signed successfully:', signature);
+        return signature;
+      }
+      
+      throw new Error('Invalid wallet type for Bitcoin signing');
+    } catch (error) {
+      console.error('Bitcoin message signing failed:', error);
+      throw new Error(`Failed to sign Bitcoin message: ${error.message}`);
+    }
+  }
+
   // Check wallet availability
   isStarknetWalletAvailable() {
     return typeof window !== 'undefined' && 
            (window.xverseWallet || window.starknet);
+  }
+
+  isBitcoinWalletAvailable() {
+    return typeof window !== 'undefined' && 
+           window.XverseProviders?.BitcoinProvider;
   }
 
   isLiskWalletAvailable() {

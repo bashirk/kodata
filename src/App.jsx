@@ -59,20 +59,20 @@ function App() {
       color: 'from-purple-600 to-pink-600',
       url: 'https://ethereumnigeria.org'
     },
-    { 
-      name: 'Filecoin Orbit', 
-      logo: '🌐', 
-      description: 'Decentralized storage network',
-      color: 'from-cyan-500 to-blue-600',
-      url: 'https://orbit.filecoin.io'
-    },
-    { 
-      name: 'Filecoin Foundation', 
-      logo: '📁', 
-      description: 'Supporting the Filecoin ecosystem',
-      color: 'from-purple-500 to-indigo-600',
-      url: 'https://fil.org'
-    },
+    // { 
+    //   name: 'Filecoin Orbit', 
+    //   logo: '🌐', 
+    //   description: 'Decentralized storage network',
+    //   color: 'from-cyan-500 to-blue-600',
+    //   url: 'https://orbit.filecoin.io'
+    // },
+    // { 
+    //   name: 'Filecoin Foundation', 
+    //   logo: '📁', 
+    //   description: 'Supporting the Filecoin ecosystem',
+    //   color: 'from-purple-500 to-indigo-600',
+    //   url: 'https://fil.org'
+    // },
     { 
       name: 'Filecoin', 
       logo: '💾', 
@@ -80,13 +80,13 @@ function App() {
       color: 'from-indigo-500 to-purple-600',
       url: 'https://filecoin.io'
     },
-    { 
-      name: 'Soar on Technologies', 
-      logo: '🚀', 
-      description: 'Technology innovation partner',
-      color: 'from-pink-500 to-purple-600',
-      url: '#'
-    }
+    // { 
+    //   name: 'Soar on Technologies', 
+    //   logo: '🚀', 
+    //   description: 'Technology innovation partner',
+    //   color: 'from-pink-500 to-purple-600',
+    //   url: '#'
+    // }
   ]
 
   const programs = [
@@ -1004,7 +1004,7 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                 </li>
                 <li className="flex items-center">
                   <MapPin className="w-4 h-4 mr-2 text-blue-400" />
-                  Yaba, Lagos, Nigeria
+                  On-chain
                 </li>
                 <li className="flex items-center">
                   <span className="w-4 h-4 mr-2 text-green-400">💬</span>

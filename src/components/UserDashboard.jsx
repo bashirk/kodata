@@ -198,7 +198,7 @@ export function UserDashboard({ isOpen, onClose }) {
               </Card>
 
               {/* MAD Token Balance */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Coins className="h-5 w-5 mr-2 text-yellow-500" />
@@ -231,7 +231,7 @@ export function UserDashboard({ isOpen, onClose }) {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Reward Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

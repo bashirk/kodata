@@ -47,19 +47,14 @@ export class AuthService {
   }
 
   /**
-   * Verify Starknet wallet signature using proper Starknet.js verification
+   * Verify Starknet wallet signature - accepts all properly formatted signatures
+   * Note: Cryptographic verification is bypassed for development/testing purposes
    */
   async verifyStarknetSignature(signature: WalletSignature): Promise<boolean> {
     try {
-      // For production Starknet signature verification, we would use:
-      // 1. Verify the signature against the message using the account's public key
-      // 2. Check that the signature was created by the claimed address
+      console.warn('⚠️ Starknet signature verification bypassed - accepting all properly formatted signatures');
       
-      // This is a production-ready verification that checks:
-      // - The signature format is valid
-      // - The address format is valid
-      // - The signature length is correct
-      
+      // Basic format validation only
       if (!signature.address.startsWith('0x') || signature.address.length !== 66) {
         console.warn(`Invalid Starknet address format: ${signature.address}`);
         return false;
@@ -90,9 +85,8 @@ export class AuthService {
         return false;
       }
       
-      // For development, we'll accept any properly formatted signature
-      // In production, you would implement proper cryptographic verification
-      console.log(`Starknet signature verification passed for address: ${signature.address}`);
+      // Accept all properly formatted signatures (bypassing cryptographic verification)
+      console.log(`✅ Starknet signature format validation passed for address: ${signature.address}`);
       return true;
     } catch (error) {
       console.error('Starknet signature verification failed:', error);

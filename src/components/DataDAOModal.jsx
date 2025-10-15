@@ -296,12 +296,13 @@ export function DataDAOModal({ isOpen, onClose }) {
                   ) : (
                     <>
                       <Wallet className="mr-2 h-4 w-4" />
-                      Connect Starknet Wallet
+                      Connect Wallet
                     </>
                   )}
                 </Button>
 
-                <Button 
+                {/* Lisk wallet temporarily hidden */}
+                {/* <Button 
                   onClick={() => handleWalletLogin('lisk')}
                   disabled={isLoggingIn}
                   variant="outline"
@@ -309,7 +310,7 @@ export function DataDAOModal({ isOpen, onClose }) {
                 >
                   <Wallet className="mr-2 h-4 w-4" />
                   Connect Lisk Wallet
-                </Button>
+                </Button> */}
               </div>
 
               <div className="mt-6 text-sm text-gray-500">
@@ -324,7 +325,8 @@ export function DataDAOModal({ isOpen, onClose }) {
                     <Download className="h-4 w-4 mr-1" />
                     Get Xverse
                   </a>
-                  <a 
+                  {/* Lisk download link temporarily hidden */}
+                  {/* <a 
                     href="https://lisk.com/desktop" 
                     target="_blank" 
                     rel="noopener noreferrer"
@@ -332,7 +334,7 @@ export function DataDAOModal({ isOpen, onClose }) {
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Get Lisk Desktop
-                  </a>
+                  </a> */}
                 </div>
               </div>
             </div>

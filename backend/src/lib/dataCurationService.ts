@@ -268,7 +268,7 @@ export class DataCurationService {
 
       const totalSubmissions = submissions.length;
       const averageQualityScore = totalSubmissions > 0 
-        ? submissions.reduce((sum, s) => sum + (s.qualityScore || 0), 0) / totalSubmissions
+        ? submissions.reduce((sum: number, s: any) => sum + (s.qualityScore || 0), 0) / totalSubmissions
         : 0;
 
       // Quality distribution
@@ -282,7 +282,7 @@ export class DataCurationService {
       // Common issues tracking
       const commonIssues: Record<string, number> = {};
 
-      submissions.forEach(submission => {
+      submissions.forEach((submission: any) => {
         const score = submission.qualityScore || 0;
         if (score >= 90) qualityDistribution.excellent++;
         else if (score >= 70) qualityDistribution.good++;

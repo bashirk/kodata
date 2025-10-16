@@ -665,7 +665,7 @@ app.get('/api/rewards/history/:userId', authenticateToken, async (req, res) => {
       totalRewards = 200; // 100 + 100
     } else {
       // Calculate total rewards from real data
-      totalRewards = rewardHistory.reduce((sum, submission) => {
+      totalRewards = rewardHistory.reduce((sum: number, submission: any) => {
         return sum + (submission.rewardAmount ? parseInt(submission.rewardAmount) : 0);
       }, 0);
     }

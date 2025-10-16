@@ -171,8 +171,8 @@ export class GovernanceService {
         _sum: { votingPower: true }
       });
       
-      const forVotes = voteCounts.find(v => v.support)?._sum.votingPower || 0;
-      const againstVotes = voteCounts.find(v => !v.support)?._sum.votingPower || 0;
+      const forVotes = voteCounts.find((v: any) => v.support)?._sum.votingPower || 0;
+      const againstVotes = voteCounts.find((v: any) => !v.support)?._sum.votingPower || 0;
       
       await this.prisma.proposal.update({
         where: { id: voteData.proposalId },

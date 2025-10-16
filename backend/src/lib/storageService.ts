@@ -205,11 +205,11 @@ export class StorageService {
         }
       });
 
-      const totalFiles = stats.reduce((sum, stat) => sum + stat._count, 0);
-      const totalSize = stats.reduce((sum, stat) => sum + (stat._sum.size || 0), 0);
+      const totalFiles = stats.reduce((sum: number, stat: any) => sum + stat._count, 0);
+      const totalSize = stats.reduce((sum: number, stat: any) => sum + (stat._sum.size || 0), 0);
       const filesByType: Record<string, number> = {};
 
-      stats.forEach(stat => {
+      stats.forEach((stat: any) => {
         filesByType[stat.mimeType] = stat._count;
       });
 

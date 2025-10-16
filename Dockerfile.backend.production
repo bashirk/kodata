@@ -15,6 +15,9 @@ RUN pnpm install
 # Copy source code
 COPY backend/ .
 
+# Generate Prisma client first
+RUN pnpm run db:generate
+
 # Build the application
 RUN pnpm run build
 

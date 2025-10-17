@@ -75,9 +75,9 @@ services:
       context: .
       dockerfile: Dockerfile.frontend.production
     container_name: kodata-frontend
-    restart: unless-stopped
+    restart: always
     ports:
-      - "${FRONTEND_PORT:-5173}:80"
+      - "5173:5173"
     env_file:
       - ./.env
     environment:

@@ -4,6 +4,7 @@ node_modules
 /backend/node_modules
 
 KoData_Undo.md
+old-server.md
 
 # Build outputs
 /backend/dist

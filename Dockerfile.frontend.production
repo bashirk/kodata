@@ -25,10 +25,12 @@ FROM nginx:alpine AS production
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration for production
-COPY nginx.frontend.conf /etc/nginx/nginx.conf
+# COPY nginx.frontend.conf /etc/nginx/nginx.conf
 
-# Expose port 80 for production
-EXPOSE 80
+# Expose port 5173 for production
+EXPOSE 5173
 
 # Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# CMD ["nginx", "-g", "daemon off;"]
+# Start the application
+CMD ["pnpm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]

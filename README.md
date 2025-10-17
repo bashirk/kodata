@@ -145,6 +145,17 @@ kodata-website/
 └── README.md           # Project documentation
 ```
 
+# Start containers
+
+ls /etc/nginx/sites-available
+
+docker-compose -f docker-compose.production.yml build --no-cache
+docker-compose -f docker-compose.production.yml down
+docker-compose -f docker-compose.production.yml up -d
+
+# Check status
+docker-compose -f docker-compose.production.yml ps
+
 ## 🎨 Components
 
 ### Navigation

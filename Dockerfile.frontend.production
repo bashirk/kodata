@@ -15,22 +15,24 @@ RUN pnpm install
 # Copy source code
 COPY . .
 
-# Build the application
+# Pnpm Build the application
 RUN pnpm run build
 
 # Production stage
-FROM nginx:alpine AS production
+FROM node:20-alpine AS production
 
-# Copy built application to nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copy nginx configuration for production
-# COPY nginx.frontend.conf /etc/nginx/nginx.conf
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
 
 # Expose port 5173 for production
 EXPOSE 5173
 
-# Start nginx
-# CMD ["nginx", "-g", "daemon off;"]
 # Start the application
-CMD ["pnpm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]

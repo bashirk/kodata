@@ -149,9 +149,11 @@ kodata-website/
 
 ls /etc/nginx/sites-available
 
-docker-compose -f docker-compose.production.yml build --no-cache
+docker-compose -f docker-compose.production.yml build --no-cache frontend
 docker-compose -f docker-compose.production.yml down
 docker-compose -f docker-compose.production.yml up -d
+docker-compose -f docker-compose.production.yml ps
+docker-compose -f docker-compose.production.yml logs frontend
 
 # Check status
 docker-compose -f docker-compose.production.yml ps

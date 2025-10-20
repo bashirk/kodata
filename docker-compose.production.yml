@@ -77,7 +77,7 @@ services:
     container_name: kodata-frontend
     restart: always
     ports:
-      - "5173:5173"
+      - "5173:80"
     env_file:
       - ./.env
     environment:

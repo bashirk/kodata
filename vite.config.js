@@ -3,22 +3,21 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(),tailwindcss()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: ['data.kobotai.co', '.kobotai.co'],
+  },
   preview: {
     host: '0.0.0.0',
     port: 5173,
-    allowedHosts: [
-      'kodata.kobotai.co',
-      'data.kobotai.co',
-      'localhost',
-      '127.0.0.1'
-    ]
-  }
+    allowedHosts: ['data.kobotai.co', '.kobotai.co'],
+  },
 })

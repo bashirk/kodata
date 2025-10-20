@@ -155,7 +155,8 @@ export function DataDAOModal({ isOpen, onClose }) {
       
       // Authenticate with Bitcoin Runes (creates user account if needed)
       console.log('📝 Authenticating with Bitcoin Runes...')
-      const response = await fetch('http://localhost:3001/api/runes/auth', {
+      const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '').replace(/\/api$/, '')
+      const response = await fetch(`${baseUrl}/api/runes/auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -178,6 +179,9 @@ export function DataDAOModal({ isOpen, onClose }) {
       
       // Store the JWT token for future API calls
       localStorage.setItem('auth_token', authData.token)
+      if (apiService && authData.token) {
+        apiService.setToken(authData.token)
+      }
       
       // Update user state in auth context
       if (setUser && authData.user) {

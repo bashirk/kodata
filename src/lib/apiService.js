@@ -1,5 +1,19 @@
 // API service for communicating with the backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Normalize base URL to avoid double "/api" when endpoints already include it
+const RAW_API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = (() => {
+  try {
+    const url = new URL(RAW_API_BASE_URL);
+    // If env base ends with /api, drop it, since endpoints already include /api prefix
+    if (url.pathname.replace(/\/$/, '') === '/api') {
+      url.pathname = '/';
+    }
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    // Fallback simple string normalization
+    return RAW_API_BASE_URL.replace(/\/$/, '').replace(/\/api$/, '');
+  }
+})();
 
 class ApiService {
   constructor() {
@@ -18,7 +32,8 @@ class ApiService {
   }
 
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    // Ensure we don't produce double slashes
+    const url = `${this.baseURL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
     const config = {
       headers: {
         'Content-Type': 'application/json',

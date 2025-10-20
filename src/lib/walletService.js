@@ -307,8 +307,18 @@ class WalletService {
     try {
       console.log('🔗 Attempting to connect Bitcoin wallet for Runes authentication...');
       
-      // Use wallet_getAccount method as per Sats Connect docs
-      const response = await request('wallet_getAccount', null);
+      // Try multiple Sats Connect methods for compatibility
+      let response;
+      try {
+        response = await request('wallet_getAccount', null);
+      } catch (e) {
+        // Fallback older/newer method name variants
+        try {
+          response = await request('wallet_getAccounts', null);
+        } catch (e2) {
+          response = await request('getAccounts', null);
+        }
+      }
       
       console.log('📋 Connection response:', response);
       
@@ -345,11 +355,15 @@ class WalletService {
         
         throw new Error('No Bitcoin addresses found in wallet');
       } else {
-        if (response.error.code === 'USER_REJECTION') {
+        const code = response?.error?.code || 'UNKNOWN_ERROR';
+        const message = response?.error?.message || 'Unknown error';
+        if (code === 'USER_REJECTION') {
           throw new Error('User rejected the connection request');
-        } else {
-          throw new Error(`Connection failed: ${response.error.message}`);
         }
+        if (code === 'ACCESS_DENIED') {
+          throw new Error('Connection failed: Access denied. Please approve connection in your Bitcoin wallet.');
+        }
+        throw new Error(`Connection failed: ${message}`);
       }
     } catch (error) {
       console.error('❌ Bitcoin wallet connection failed:', error);
@@ -362,7 +376,8 @@ class WalletService {
       console.log(`🔍 Verifying Runes balance for address: ${address}, runeId: ${runeId}`);
       
       // Use backend API instead of direct API call to avoid CORS issues
-      const response = await fetch('http://localhost:3001/api/runes/balance', {
+      const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '').replace(/\/api$/, '')
+      const response = await fetch(`${baseUrl}/api/runes/balance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

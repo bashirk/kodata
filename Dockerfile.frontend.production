@@ -11,6 +11,16 @@ RUN pnpm install
 
 # Copy source and build
 COPY . .
+
+# Set build-time environment variables for Vite
+ARG VITE_API_URL=https://data.kobotai.co/api
+ARG VITE_STARKNET_RPC_URL=https://starknet-sepolia.public.blastapi.io
+ARG VITE_LISK_WS_URL=wss://ws.api.lisk.com/
+
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_STARKNET_RPC_URL=$VITE_STARKNET_RPC_URL
+ENV VITE_LISK_WS_URL=$VITE_LISK_WS_URL
+
 RUN pnpm run build
 
 # Stage 2: production image, serve with NGINX

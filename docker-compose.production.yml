@@ -54,6 +54,7 @@ services:
       - NODE_ENV=production
       - PORT=3001
       - REDIS_URL=redis://redis:6379
+      - FRONTEND_URL=${FRONTEND_URL:-https://data.kobotai.co}
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,7 +82,7 @@ services:
     env_file:
       - ./.env
     environment:
-      - VITE_API_URL=${VITE_API_URL:-http://localhost:3001}
+      - VITE_API_URL=${VITE_API_URL:-https://data.kobotai.co/api}
       - VITE_STARKNET_RPC_URL=${STARKNET_RPC_URL:-https://starknet-sepolia.public.blastapi.io}
       - VITE_LISK_WS_URL=${VITE_LISK_WS_URL:-wss://ws.api.lisk.com/}
     networks:

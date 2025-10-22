@@ -149,6 +149,9 @@ kodata-website/
 
 ls /etc/nginx/sites-available
 
+sudo git clone -b block https://github.com/bashirk/kodata.git app && cd app
+sudo nano .env
+sudo nano backend/.env
 docker-compose -f docker-compose.production.yml build --no-cache frontend
 docker-compose -f docker-compose.production.yml down
 docker-compose -f docker-compose.production.yml up -d

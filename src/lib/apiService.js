@@ -1,7 +1,16 @@
 // API service for communicating with the backend
 // Normalize base URL to avoid double "/api" when endpoints already include it
-const RAW_API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// In production, use empty string for relative URLs (nginx proxies /api to backend)
+// In development, use localhost:3001
+const RAW_API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? '' : 'http://localhost:3001');
+
 const API_BASE_URL = (() => {
+  // If empty or just slash, use empty for relative URLs
+  if (!RAW_API_BASE_URL || RAW_API_BASE_URL === '/') {
+    return '';
+  }
+  
   try {
     const url = new URL(RAW_API_BASE_URL);
     // If env base ends with /api, drop it, since endpoints already include /api prefix

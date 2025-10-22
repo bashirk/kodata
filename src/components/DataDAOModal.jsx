@@ -379,10 +379,101 @@ export function DataDAOModal({ isOpen, onClose }) {
               
               {walletConnectionStep === 1 ? (
                 <>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Bitcoin Wallet</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Wallet</h3>
               <p className="text-gray-600 mb-6">
-                    Connect your xVerse Bitcoin wallet to verify Runes ownership for DAO governance participation.
+                    Choose your preferred blockchain network to get started with KoData DAO
               </p>
+              
+              {/* Supported & Coming Soon Chains */}
+              <div className="mb-8">
+                <h4 className="text-sm font-semibold text-gray-700 mb-4 text-left">Supported Networks</h4>
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="group bg-white border-2 border-gray-200 hover:border-orange-400 rounded-xl p-4 transition-all duration-300 hover:shadow-lg cursor-pointer">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-110 transition-transform">
+                      ₿
+                    </div>
+                    <p className="text-xs font-medium text-gray-900">Bitcoin</p>
+                    <p className="text-[10px] text-gray-500">Runes</p>
+                  </div>
+                  
+                  <div className="group bg-white border-2 border-gray-200 hover:border-purple-400 rounded-xl p-4 transition-all duration-300 hover:shadow-lg cursor-pointer">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-110 transition-transform">
+                      SN
+                    </div>
+                    <p className="text-xs font-medium text-gray-900">Starknet</p>
+                    <p className="text-[10px] text-gray-500">MAD Token</p>
+                  </div>
+                  
+                  <div className="group bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl p-4 transition-all duration-300 hover:shadow-lg cursor-pointer">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-110 transition-transform">
+                      L
+                    </div>
+                    <p className="text-xs font-medium text-gray-900">Lisk</p>
+                    <p className="text-[10px] text-gray-500">L2</p>
+                  </div>
+                </div>
+                
+                <h4 className="text-sm font-semibold text-gray-700 mb-4 text-left">Coming Soon</h4>
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      ●●●●●
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Polkadot</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-gray-800 to-gray-900 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      🐦
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Kusama</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      🌙
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Moonbeam</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      △
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Acala</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      ⚛
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Astar</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      🌈
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Bifrost</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-red-400 to-pink-500 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      ◆
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Mythos</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 opacity-60">
+                    <div className="w-10 h-10 mx-auto mb-1 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                      💧
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700">Hydration</p>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-500 italic mb-6">...and many more</p>
+              </div>
               
               {loginError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">

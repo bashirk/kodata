@@ -257,119 +257,120 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, isGov
 
        {/* Hero Section */}
       <section id="home" className="relative pt-32 pb-16 lg:pt-40 lg:pb-20 overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-blue-100/20 to-purple-100/20"></div>
+        {/* Subtle Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900/20"></div>
         
-        {/* Animated Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.03]">
+        {/* Subtle Grid Pattern */}
+        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05]">
           <div className="absolute inset-0" style={{
             backgroundImage: 'linear-gradient(to right, #8B5CF6 1px, transparent 1px), linear-gradient(to bottom, #8B5CF6 1px, transparent 1px)',
-            backgroundSize: '40px 40px'
+            backgroundSize: '60px 60px'
           }}></div>
         </div>
 
-        {/* Animated Background Orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-pink-400/20 to-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        
-        {/* Floating Elements */}
-        <div className="absolute top-40 right-20 w-2 h-2 bg-purple-400 rounded-full animate-ping"></div>
-        <div className="absolute top-60 left-40 w-2 h-2 bg-blue-400 rounded-full animate-ping delay-500"></div>
-        <div className="absolute bottom-40 right-40 w-2 h-2 bg-pink-400 rounded-full animate-ping delay-1000"></div>
+        {/* Subtle Floating Orbs */}
+        <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-blue-400/10 to-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-r from-pink-400/10 to-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl">
-            <div className="mb-6">
-              <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 px-4 py-2 text-sm font-medium shadow-lg">
-                🚀 Now Live: DataDAO Mainnet
-              </Badge>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            {/* Banner - Improved Design */}
+            <div className="mb-8">
+              <div className="inline-flex items-center text-sm font-medium mx-auto px-6 py-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-purple-200/50 dark:border-purple-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+                <span className="mr-2 text-lg">🚀</span>
+                <span className="text-gray-700 dark:text-gray-300">Now Live:</span>
+                <span className="text-purple-600 dark:text-purple-400 font-semibold ml-2">DataDAO Mainnet</span>
+              </div>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 mb-6 leading-tight hero-title-mobile">
-              <span className="block bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
+            {/* Main Heading - Improved Typography */}
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 dark:text-white mb-8 leading-tight">
+              <span className="block bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                 Community Data
               </span>
-              <span className="block bg-gradient-to-r from-purple-800 via-pink-800 to-blue-800 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Built for Impact
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl lg:text-2xl text-gray-700 max-w-3xl mb-8 lg:mb-10 leading-relaxed hero-subtitle-mobile">
-              KoData empowers African communities to curate high-quality datasets for AI and Web3 — private by design,
-              <span className="text-purple-600 font-semibold"> culturally relevant</span>, and built for real-world impact.
+            {/* Subheading - Improved Readability */}
+            <p className="max-w-3xl mx-auto text-lg sm:text-xl lg:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed mb-12">
+              KoData empowers African communities to curate high-quality datasets for AI and Web3 — 
+              <span className="text-gray-900 dark:text-white font-semibold"> private by design</span>, 
+              <span className="text-purple-600 dark:text-purple-400 font-semibold"> culturally relevant</span>, and built for 
+              <span className="text-gray-900 dark:text-white font-semibold"> real-world impact</span>.
             </p>
 
-            {/* Stats Preview */}
-            <div className="flex flex-wrap gap-6 lg:gap-8 mb-10">
+            {/* Stats Cards - Improved Design */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
               {[
-                { number: '500+', label: 'Students Trained', icon: '🎓' },
-                { number: '150+', label: 'Datasets Created', icon: '📊' },
-                { number: '25+', label: 'Communities', icon: '🌍' },
-                { number: '10K+', label: 'MAD Tokens', icon: '🪙' }
+                { number: '500+', label: 'Students Trained', icon: '🎓', color: 'from-blue-500 to-cyan-500' },
+                { number: '150+', label: 'Datasets Created', icon: '📊', color: 'from-purple-500 to-pink-500' },
+                { number: '25+', label: 'Communities', icon: '🌍', color: 'from-green-500 to-emerald-500' },
+                { number: '10K+', label: 'MAD Tokens', icon: '🪙', color: 'from-orange-500 to-yellow-500' }
               ].map((stat, index) => (
                 <div key={index} className="group relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur-xl"></div>
-                  <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-200/50">
-                    <div className="text-2xl mb-1">{stat.icon}</div>
-                    <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                      {stat.number}
-                    </div>
-                    <div className="text-xs lg:text-sm text-gray-600 font-medium">{stat.label}</div>
+                  <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl opacity-5 group-hover:opacity-10 transition-opacity blur-xl`}></div>
+                  <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-700">
+                    <div className="text-3xl mb-3">{stat.icon}</div>
+                    <div className={`text-3xl lg:text-4xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-1`}>
+                    {stat.number}
+                  </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{stat.label}</div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            {/* CTA Buttons - Improved Design */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
               <Button 
                 size="lg" 
-                className="group relative rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 hover:from-purple-700 hover:via-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden"
+                className="group relative rounded-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-10 py-6 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
                 onClick={openDataDAOModal}
               >
-                <span className="relative z-10 flex items-center justify-center">
-                  <Network className="mr-2 h-5 w-5 group-hover:animate-pulse" />
+                <span className="flex items-center justify-center">
+                  <Network className="mr-3 h-6 w-6 group-hover:animate-pulse" />
                   Connect Your Wallet
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
+                  <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform duration-200" />
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </Button>
 
               <Button 
                 size="lg" 
                 variant="outline"
-                className="group rounded-full border-2 border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 px-8 py-6 font-semibold transition-all duration-300 hover:shadow-lg"
+                className="group rounded-full border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-10 py-6 text-lg font-bold transition-all duration-300 hover:shadow-lg"
                   onClick={() => scrollToSection('#about')}
                 >
                 Explore Multi-Chain
-                <Sparkles className="ml-2 h-5 w-5 group-hover:animate-spin" />
+                <Sparkles className="ml-3 h-6 w-6 group-hover:animate-spin" />
                 </Button>
               </div>
               
-              {/* Multi-chain badges */}
-              <div className="flex items-center justify-center gap-3 mt-6 flex-wrap">
-                <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-200/50">
-                  <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2">
-                    ₿
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">Bitcoin</span>
+            {/* Multi-chain badges - Improved Design */}
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <div className="flex items-center bg-white dark:bg-gray-800 rounded-full px-5 py-3 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                  ₿
                 </div>
-                <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-200/50">
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2">
-                    SN
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">Starknet</span>
-                </div>
-                <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-200/50">
-                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-bold mr-2">
-                    L
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">Lisk</span>
-                </div>
-                <div className="flex items-center bg-gray-100/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-200/50">
-                  <span className="text-xs font-medium text-gray-500">+ 8 more coming soon</span>
-                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Bitcoin</span>
               </div>
+              <div className="flex items-center bg-white dark:bg-gray-800 rounded-full px-5 py-3 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                  SN
+                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Starknet</span>
+              </div>
+              <div className="flex items-center bg-white dark:bg-gray-800 rounded-full px-5 py-3 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                  L
+                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Lisk</span>
+              </div>
+              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-full px-5 py-3 shadow-lg border border-gray-200 dark:border-gray-600">
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">+ 8 more coming soon</span>
+              </div>
+            </div>
             </div>
           </div>
       </section>
@@ -461,8 +462,8 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, isGov
               ))}
             </div>
             <p className="text-center text-gray-500 italic mt-8 text-sm">...and many more blockchain networks</p>
+            </div>
           </div>
-        </div>
       </section>
 
       {/* About Section */}
@@ -605,10 +606,10 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, isGov
       {/* Events Section */}
       <section id="events" className="py-16 lg:py-20 bg-white relative overflow-hidden">
         {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
+        {/* <div className="absolute inset-0 opacity-5">
           <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl"></div>
-        </div>
+        </div> */}
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 lg:mb-16">

@@ -565,18 +565,19 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, isGov
 
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm overflow-hidden ${
+              <Card key={index} className={`group relative border border-gray-200 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white overflow-hidden ${
                 index === 0 ? 'animate-stagger-1' :
                 index === 1 ? 'animate-stagger-2' :
                 'animate-stagger-3'
               }`}>
                 {/* Quote decoration */}
-                <div className="absolute top-4 left-4 text-4xl text-purple-200 opacity-50 group-hover:opacity-75 transition-opacity duration-300">"</div>
+                <div className="absolute top-4 left-4 text-5xl text-purple-200 opacity-50 group-hover:opacity-75 transition-opacity duration-300">"</div>
+                <div className="absolute bottom-4 right-4 text-5xl text-purple-200 opacity-50 group-hover:opacity-75 transition-opacity duration-300">"</div>
 
                 <CardContent className="relative p-8">
                   <div className="flex items-center mb-6">
                     <div className="relative">
-                      <div className="text-4xl mr-4 p-3 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-4xl mr-4 p-4 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                         {testimonial.avatar}
                       </div>
                       {/* Avatar glow */}
@@ -751,19 +752,28 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, isGov
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 lg:mb-16">
-            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-800/50 to-pink-800/50 rounded-full mb-6 backdrop-blur-sm border border-purple-500/30">
-              <Coins className="w-4 h-4 mr-2 text-purple-300" />
-              <span className="text-sm font-medium text-purple-200">Decentralized Rewards</span>
+            <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full mb-8 shadow-lg border border-purple-400/50 animate-pulse">
+              <Coins className="w-5 h-5 mr-3 text-white" />
+              <span className="text-base font-bold text-white">Decentralized Rewards</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+            <h2 className="text-5xl lg:text-6xl font-extrabold mb-8 leading-tight">
               Join the
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"> DataDAO Revolution</span>
             </h2>
-            <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-200 max-w-4xl mx-auto leading-relaxed mb-8">
               Be part of Africa's largest decentralized data ecosystem. Contribute to data curation, annotation, and validation
-              while earning <span className="text-purple-400 font-semibold">MAD tokens</span> for your on-chain activities.
+              while earning <span className="text-pink-400 font-semibold">MAD tokens</span> for your on-chain activities.
               Help build the future of Web3 and AI data infrastructure.
             </p>
+            <div className="flex justify-center">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+              >
+                <Zap className="mr-2 h-5 w-5" />
+                Get Started Now
+              </Button>
+            </div>
           </div>
           <div className="grid lg:grid-cols-2 gap-12 items-start mb-12 lg:mb-16">
             <div className="space-y-8">

@@ -20,11 +20,13 @@ model User {
   starknetAddress String?
   liskAddress    String?    // Lisk address (e.g., base32 format)
   btcAddress     String?
+  ethereumAddress String?   // Ethereum address (0x format)
   runesBalance   String?   // Verified Runes balance
   runesRuneId    String?   // Which Rune they hold
   votingPower    Int       @default(0) // Based on Runes balance
   lastRunesSync  DateTime? // Last balance check
   reputation     Int       @default(0)
+  governanceStake String?   @default("0") // Governance stake amount
   role           UserRole  @default(USER)
   isAdmin        Boolean   @default(false)
   adminApprovedBy String?  // ID of admin who approved this user
@@ -37,11 +39,15 @@ model User {
   storage        Storage[]
   proposals      Proposal[]
   votes          Vote[]
+  ethereumTransfers EthereumTransfer[]
+  activities     Activity[]
+
+  @@index([ethereumAddress])
 }
 
 model Transaction {
   id          String   @id @default(uuid())
-  amount      Int
+  amount      Decimal
   currency    String
   status      String
   reference   String   @unique
@@ -150,4 +156,47 @@ model Storage {
   @@index([userId])
   @@index([contentHash])
   @@index([storageUri])
+}
+
+model EthereumTransfer {
+  id              String   @id @default(uuid())
+  fromAddress     String
+  toAddress       String
+  amount          Decimal
+  transactionHash String   @unique
+  blockNumber     Int?
+  blockHash       String?
+  gasUsed         String?
+  gasPrice        String?
+  status          String   // pending, confirmed, failed
+  eventType       String   // transfer, governance_deposit, governance_withdrawal, reward
+  metadata        Json?    // Additional event data
+  processed       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+
+  @@index([fromAddress])
+  @@index([toAddress])
+  @@index([transactionHash])
+  @@index([eventType])
+  @@index([status])
+  @@index([processed])
+  @@index([userId])
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // transfer, governance_deposit, governance_withdrawal, reward
+  title       String
+  description String?
+  metadata    Json?    // Additional activity data
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([type])
 }

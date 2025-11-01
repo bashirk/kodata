@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
 import jwt from 'jsonwebtoken';
 import { Relayer } from './lib/relayer';
@@ -11,6 +11,17 @@ import { MADTokenService } from './lib/madTokenService';
 import { DataCurationService } from './lib/dataCurationService';
 import { RunesAuthService } from './lib/runesAuthService';
 import { GovernanceService } from './lib/governanceService';
+import { EthereumService } from './lib/ethereumService';
+import { EthereumMADTokenService } from './lib/ethereumMadTokenService';
+import { 
+  validateEthereumAddress, 
+  validateTransactionHash, 
+  validateAmount, 
+  validateSignature, 
+  validateMessage,
+  createRateLimiter,
+  errorHandler 
+} from './lib/validation';
 import PrismaSingleton from './lib/prisma';
 
 // Extend Express Request interface to include user
@@ -32,6 +43,8 @@ const madTokenService = new MADTokenService();
 const dataCurationService = new DataCurationService();
 const runesAuthService = new RunesAuthService();
 const governanceService = new GovernanceService();
+const ethereumService = new EthereumService();
+const ethereumMadTokenService = new EthereumMADTokenService();
 
 // Middleware
 app.use(cors({
@@ -105,7 +118,7 @@ app.get('/', (req, res) => {
     message: 'Data DAO Backend API',
     version: '1.0.0',
     endpoints: ['/health', '/ready', '/api/auth', '/api/submissions', '/api/users'],
-    services: ['relayer', 'starknet', 'lisk', 'auth']
+    services: ['relayer', 'starknet', 'lisk', 'auth', 'ethereum', 'ethereum-mad-token']
   });
 });
 
@@ -128,6 +141,103 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Ethereum wallet endpoints
+// Rate limiter for wallet operations
+const walletRateLimit = createRateLimiter(10, 60000); // 10 requests per minute
+
+app.post('/api/ethereum/wallet/connect', 
+  walletRateLimit,
+  validateEthereumAddress('address'),
+  validateSignature('signature'),
+  validateMessage('message'),
+  async (req, res) => {
+    try {
+      const { address, signature, message } = req.body;
+
+      // Verify the signature
+      const isValid = await ethereumService.verifyMessage(message, signature, address);
+      
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+
+      // Find or create user with Ethereum address
+      let user = await prisma.user.findFirst({
+        where: { ethereumAddress: address }
+      });
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            ethereumAddress: address,
+            name: `Ethereum User ${address.slice(0, 6)}...${address.slice(-4)}`,
+            credits: 3
+          }
+        });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, address: user.ethereumAddress },
+        process.env.JWT_SECRET || 'default-secret',
+        { expiresIn: '7d' }
+      );
+
+      return res.json({
+        success: true,
+        user: {
+          id: user.id,
+          ethereumAddress: user.ethereumAddress,
+          name: user.name,
+          credits: user.credits
+        },
+        token
+      });
+    } catch (error) {
+      console.error('Ethereum wallet connection error:', error);
+      return res.status(500).json({ error: error instanceof Error ? error.message : 'Wallet connection failed' });
+    }
+  }
+);
+
+app.post('/api/ethereum/wallet/verify',
+  walletRateLimit,
+  validateEthereumAddress('address'),
+  validateSignature('signature'),
+  validateMessage('message'),
+  async (req, res) => {
+    try {
+      const { message, signature, address } = req.body;
+
+      const isValid = await ethereumService.verifyMessage(message, signature, address);
+      res.json({ valid: isValid });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Signature verification failed' });
+    }
+  }
+);
+
+app.get('/api/ethereum/balance/:address',
+  validateEthereumAddress('address'),
+  async (req, res) => {
+    try {
+      const { address } = req.params;
+
+      const balance = await ethereumService.getBalance(address);
+      const madTokenBalance = await ethereumMadTokenService.getMadBalance(address);
+      
+      res.json({
+        ethBalance: balance,
+        madTokenBalance: madTokenBalance,
+        address: address
+      });
+    } catch (error) {
+      console.error('Ethereum balance error:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to fetch balance' });
+    }
+  }
+);
+
 // User endpoints
 app.get('/api/users/profile', authenticateToken, async (req, res) => {
   try {
@@ -149,6 +259,114 @@ app.get('/api/users/profile', authenticateToken, async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// Ethereum dataset upload with MAD token deduction
+app.post('/api/ethereum/submissions', authenticateToken, async (req, res) => {
+  try {
+    const { 
+      taskId, 
+      resultHash, 
+      storageUri, 
+      title, 
+      description, 
+      dataType, 
+      tags, 
+      license,
+      contributionType,
+      file,
+      userAddress // Ethereum address for MAD token deduction
+    } = req.body;
+    
+    console.log('📝 Creating Ethereum submission with data:', {
+      taskId,
+      title,
+      description,
+      dataType,
+      contributionType,
+      userId: req.user.id,
+      userAddress
+    });
+    
+    // Validate required fields
+    if (!title || !description || !userAddress) {
+      res.status(400).json({ error: 'Title, description, and userAddress are required' });
+      return;
+    }
+
+    // Validate Ethereum address format
+    if (!userAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid Ethereum address format' });
+    }
+
+    // Check user's MAD token balance
+    const madTokenBalance = await ethereumMadTokenService.getMadBalance(userAddress);
+    const requiredTokens = 10; // 10 MAD tokens required for submission
+
+    if (parseFloat(madTokenBalance) < requiredTokens) {
+      return res.status(402).json({ 
+        error: 'Insufficient MAD tokens',
+        required: requiredTokens,
+        current: madTokenBalance,
+        message: `You need at least ${requiredTokens} MAD tokens to submit data`
+      });
+    }
+
+    // Deduct MAD tokens from user
+    const serverWalletAddress = ethereumService.getServerWalletAddress();
+    let deductionTxHash;
+    try {
+      deductionTxHash = await ethereumMadTokenService.transferMad(
+        userAddress,
+        serverWalletAddress,
+        requiredTokens.toString()
+      );
+      console.log('💰 MAD token deduction successful:', deductionTxHash);
+    } catch (error) {
+      console.error('❌ MAD token deduction failed:', error);
+      return res.status(500).json({ 
+        error: 'MAD token deduction failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+    
+    // Create submission with proper data curation fields
+    const submission = await prisma.submission.create({
+      data: {
+        taskId: taskId || `task_${Date.now()}`,
+        userId: req.user.id,
+        resultHash: resultHash || `hash_${Date.now()}`,
+        storageUri: storageUri || 'text://submission',
+        status: 'PENDING',
+        rewardAmount: requiredTokens.toString(), // Store the deduction amount
+        rewardTxHash: deductionTxHash // Store the deduction transaction
+      }
+    });
+
+    // Log the transaction
+    await prisma.transaction.create({
+      data: {
+        userId: req.user.id,
+        amount: new Prisma.Decimal(requiredTokens.toString()),
+        currency: 'MAD',
+        status: 'CONFIRMED',
+        reference: `mad_deduction_${submission.id}_${Date.now()}`
+      }
+    });
+
+    console.log('✅ Ethereum submission created successfully:', submission.id);
+    return res.json({
+      success: true,
+      submission,
+      deductionTxHash,
+      message: `Submission created. ${requiredTokens} MAD tokens deducted.`
+    });
+  } catch (error) {
+    console.error('❌ Ethereum submission creation error:', error);
+    return res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to create submission'
+    });
   }
 });
 
@@ -780,6 +998,89 @@ app.post('/api/mad-token/transfer', authenticateToken, async (req, res) => {
   }
 });
 
+// Rate limiter for token transfers
+const tokenTransferRateLimit = createRateLimiter(5, 60000); // 5 transfers per minute
+
+app.post('/api/ethereum/mad-token/transfer', 
+  authenticateToken,
+  tokenTransferRateLimit,
+  validateEthereumAddress('to'),
+  async (req, res) => {
+    try {
+      const { to, amount, from } = req.body;
+      
+      // Validate amount
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        return res.status(400).json({ error: 'Amount must be a positive number' });
+      }
+
+      // Validate sender address if provided
+      if (from) {
+        if (!from.match(/^0x[a-fA-F0-9]{40}$/)) {
+          return res.status(400).json({ error: 'Invalid sender Ethereum address format' });
+        }
+      }
+      
+      console.log(`🔄 Processing Ethereum MAD token transfer: ${amount} MAD from ${from || 'server'} to ${to}`);
+      
+      const txHash = await ethereumMadTokenService.transferMad(
+        from || ethereumService.getServerWalletAddress(),
+        to,
+        amount
+      );
+      
+      return res.json({
+        success: true,
+        transactionHash: txHash,
+        blockchain: 'ethereum',
+        message: `Successfully transferred ${amount} MAD tokens to ${to}`
+      });
+    } catch (error) {
+      console.error('Ethereum MAD token transfer error:', error);
+      return res.status(500).json({ 
+        error: 'Failed to transfer MAD tokens',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+);
+
+app.get('/api/ethereum/transaction/:txHash/status',
+  validateTransactionHash('txHash'),
+  async (req, res) => {
+    try {
+      const { txHash } = req.params;
+
+      const receipt = await ethereumService.getTransactionReceipt(txHash);
+      
+      if (!receipt) {
+        return res.json({
+          status: 'pending',
+          txHash,
+          message: 'Transaction not yet confirmed'
+        });
+      }
+
+      return res.json({
+        status: receipt.status === 1 ? 'confirmed' : 'failed',
+        txHash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString(),
+        effectiveGasPrice: (receipt as any).effectiveGasPrice?.toString(),
+        contractAddress: receipt.contractAddress,
+        logs: receipt.logs?.length || 0
+      });
+    } catch (error) {
+      console.error('Ethereum transaction status error:', error);
+      return res.status(500).json({ 
+        error: 'Failed to get transaction status',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+);
+
 app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
   try {
     const { to, amount, reason } = req.body;
@@ -1089,6 +1390,123 @@ app.post('/api/governance/proposals/:id/vote', authenticateToken, async (req, re
     });
   } catch (error) {
     console.error('Vote submission error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to submit vote',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post('/api/ethereum/governance/proposals/:id/vote', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { support, userAddress, signature, message } = req.body;
+    
+    if (typeof support !== 'boolean' || !userAddress || !signature || !message) {
+      return res.status(400).json({ 
+        error: 'Support (boolean), userAddress, signature, and message are required' 
+      });
+    }
+
+    // Validate Ethereum address format
+    if (!userAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: 'Invalid Ethereum address format' });
+    }
+
+    // Verify the signature
+    const isValidSignature = await ethereumService.verifyMessage(message, signature, userAddress);
+    if (!isValidSignature) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    // Check user's MAD token balance for voting power
+    const madTokenBalance = await ethereumMadTokenService.getMadBalance(userAddress);
+    const votingPower = parseFloat(madTokenBalance);
+    
+    if (votingPower === 0) {
+      return res.status(402).json({ 
+        error: 'No voting power',
+        message: 'You need MAD tokens to vote on proposals'
+      });
+    }
+
+    // Find the proposal
+    const proposal = await prisma.proposal.findUnique({
+      where: { id }
+    });
+
+    if (!proposal) {
+      return res.status(404).json({ error: 'Proposal not found' });
+    }
+
+    // Check if user has already voted
+    const existingVote = await prisma.vote.findFirst({
+      where: {
+        proposalId: id,
+        userId: req.user.id
+      }
+    });
+
+    if (existingVote) {
+      return res.status(400).json({ error: 'You have already voted on this proposal' });
+    }
+
+    // Create the vote with MAD token voting power
+    const vote = await prisma.vote.create({
+      data: {
+        proposalId: id,
+        userId: req.user.id,
+        support,
+        votingPower: votingPower,
+        btcSignature: signature // Store Ethereum signature
+      }
+    });
+
+    // Update proposal vote counts
+    const currentProposal = await prisma.proposal.findUnique({
+      where: { id },
+      select: { forVotes: true, againstVotes: true }
+    });
+    
+    if (!currentProposal) {
+      return res.status(404).json({ error: 'Proposal not found' });
+    }
+    
+    const currentForVotes = parseInt(currentProposal.forVotes || '0');
+    const currentAgainstVotes = parseInt(currentProposal.againstVotes || '0');
+    
+    const updateData = support 
+      ? { forVotes: (currentForVotes + votingPower).toString() }
+      : { againstVotes: (currentAgainstVotes + votingPower).toString() };
+
+    const updatedProposal = await prisma.proposal.update({
+      where: { id },
+      data: updateData
+    });
+
+    // Log the governance transaction
+    await prisma.transaction.create({
+      data: {
+        userId: req.user.id,
+        amount: new Prisma.Decimal(votingPower.toString()),
+        currency: 'MAD',
+        status: 'CONFIRMED',
+        reference: `governance_vote_${vote.id}_${Date.now()}`
+      }
+    });
+
+    return res.json({
+      success: true,
+      vote,
+      updatedCounts: {
+        forVotes: updatedProposal.forVotes,
+        againstVotes: updatedProposal.againstVotes
+      },
+      message: 'Vote submitted successfully',
+      votingPower
+    });
+  } catch (error) {
+    console.error('Ethereum governance vote error:', error);
     return res.status(500).json({ 
       error: 'Failed to submit vote',
       details: error instanceof Error ? error.message : String(error)
@@ -1564,5 +1982,8 @@ const shutdown = async () => {
 
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
+
+// Global error handler - must be last
+app.use(errorHandler);
 
 startServer();

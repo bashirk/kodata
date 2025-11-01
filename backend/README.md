@@ -12,6 +12,10 @@ backend/
 │       ├── authService.ts        # Authentication service
 │       ├── liskService.ts        # Lisk blockchain service
 │       ├── madTokenService.ts    # MAD token service
+│       ├── ethereumService.ts    # Ethereum blockchain service
+│       ├── ethereumMadTokenService.ts # Ethereum MAD token service
+│       ├── ethereumEventListener.ts # Ethereum event listener
+│       ├── validation.ts         # Input validation utilities
 │       ├── prisma.ts            # Database service
 │       ├── relayer.ts           # Transaction relayer
 │       └── starknetService.ts   # Starknet blockchain service
@@ -104,6 +108,15 @@ pnpm run dev
 - `POST /api/mad-token/stake` - Stake tokens
 - `POST /api/mad-token/unstake` - Unstake tokens
 
+### Ethereum Integration
+- `POST /api/ethereum/wallet/connect` - Connect Ethereum wallet
+- `POST /api/ethereum/wallet/verify` - Verify wallet connection
+- `GET /api/ethereum/balance/:address` - Get Ethereum balance
+- `POST /api/ethereum/mad-token/transfer` - Transfer MAD tokens on Ethereum
+- `POST /api/ethereum/submissions` - Submit dataset with MAD token deduction
+- `POST /api/ethereum/governance/proposals/:id/vote` - Vote on governance proposal
+- `GET /api/ethereum/transaction/:txHash/status` - Get transaction status
+
 ### Blockchain Status
 - `GET /api/blockchain/status` - Get blockchain connection status
 
@@ -171,3 +184,7 @@ See `env.example` for all required environment variables. Key variables include:
 - Use testnet for development
 - Keep keystore files secure
 - Review all contract interactions before mainnet deployment
+
+## Additional Documentation
+
+- [Ethereum Integration Guide](ETHEREUM_INTEGRATION.md) - Comprehensive guide for Ethereum wallet integration, token transfers, governance voting, and event listening

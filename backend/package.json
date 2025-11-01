@@ -31,6 +31,7 @@
     "@liskhq/lisk-passphrase": "^4.1.0",
     "@liskhq/lisk-transactions": "^6.1.0",
     "@prisma/client": "^6.16.2",
+    "alchemy-sdk": "^3.6.5",
     "bullmq": "^5.58.5",
     "cors": "^2.8.5",
     "ethers": "^6.15.0",

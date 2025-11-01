@@ -17,10 +17,11 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 
 export function UserDashboard({ isOpen, onClose }) {
-  const { user, isAuthenticated, getMADTokenBalance, getMADTokenInfo, getRewardHistory } = useAuth()
+  const { user, isAuthenticated, getMADTokenBalance, getMADTokenInfo, getRewardHistory, getEthereumMADTokenBalance } = useAuth()
   const [loading, setLoading] = useState(false)
   const [madTokenInfo, setMadTokenInfo] = useState(null)
   const [userBalance, setUserBalance] = useState(null)
+  const [ethereumUserBalance, setEthereumUserBalance] = useState(null)
   const [rewardHistory, setRewardHistory] = useState([])
   const [error, setError] = useState('')
 
@@ -50,6 +51,16 @@ export function UserDashboard({ isOpen, onClose }) {
           setUserBalance(balance)
         } catch (error) {
           console.warn('Failed to load user balance:', error)
+        }
+      }
+
+      // Load Ethereum user balance
+      if (user?.ethereumAddress) {
+        try {
+          const ethBalance = await getEthereumMADTokenBalance(user.ethereumAddress)
+          setEthereumUserBalance(ethBalance)
+        } catch (error) {
+          console.warn('Failed to load Ethereum user balance:', error)
         }
       }
 
@@ -188,6 +199,12 @@ export function UserDashboard({ isOpen, onClose }) {
                       </p>
                     </div>
                     <div>
+                      <p className="text-sm text-gray-600">Ethereum Address</p>
+                      <p className="font-mono text-sm text-gray-900">
+                        {formatAddress(user?.ethereumAddress)}
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-600">User ID</p>
                       <p className="font-mono text-sm text-gray-900">
                         {user?.id?.slice(-8) || 'N/A'}
@@ -198,7 +215,7 @@ export function UserDashboard({ isOpen, onClose }) {
               </Card>
 
               {/* MAD Token Balance */}
-              {/* <Card>
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Coins className="h-5 w-5 mr-2 text-yellow-500" />
@@ -207,14 +224,12 @@ export function UserDashboard({ isOpen, onClose }) {
                 </CardHeader>
                 <CardContent>
                   {madTokenInfo && userBalance ? (
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-gray-900 mb-2">
-                        {formatBalance(userBalance.balance)} {madTokenInfo.symbol}
-                      </div>
-                      <p className="text-gray-600">
-                        {madTokenInfo.name} • {madTokenInfo.decimals} decimals
-                      </p>
-                      <div className="mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">Starknet Balance</p>
+                        <div className="text-2xl font-bold text-gray-900 mb-2">
+                          {formatBalance(userBalance.balance)} {madTokenInfo.symbol}
+                        </div>
                         <Button
                           onClick={() => window.open('https://starkscan.co/', '_blank')}
                           variant="outline"
@@ -224,6 +239,20 @@ export function UserDashboard({ isOpen, onClose }) {
                           View on Starkscan
                         </Button>
                       </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">Ethereum Balance</p>
+                        <div className="text-2xl font-bold text-gray-900 mb-2">
+                          {ethereumUserBalance ? formatBalance(ethereumUserBalance.balance) : '0.00'} {madTokenInfo.symbol}
+                        </div>
+                        <Button
+                          onClick={() => window.open('https://etherscan.io/', '_blank')}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          View on Etherscan
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-4">
@@ -231,7 +260,7 @@ export function UserDashboard({ isOpen, onClose }) {
                     </div>
                   )}
                 </CardContent>
-              </Card> */}
+              </Card>
 
               {/* Reward Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -171,12 +171,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const getEthereumMADTokenBalance = async (address) => {
+    try {
+      const balance = await apiService.getEthereumMADTokenBalance(address);
+      return balance;
+    } catch (error) {
+      console.error('Failed to get Ethereum MAD token balance:', error);
+      throw error;
+    }
+  };
+
   const getMADTokenStaking = async (address) => {
     try {
       const staking = await apiService.getMADTokenStaking(address);
       return staking;
     } catch (error) {
       console.error('Failed to get MAD token staking info:', error);
+      throw error;
+    }
+  };
+
+  const getEthereumVotingPower = async (address) => {
+    try {
+      const votingPower = await apiService.getEthereumVotingPower(address);
+      return votingPower;
+    } catch (error) {
+      console.error('Failed to get Ethereum voting power:', error);
       throw error;
     }
   };
@@ -297,7 +317,9 @@ export const AuthProvider = ({ children }) => {
     // MAD Token functions
     getMADTokenInfo,
     getMADTokenBalance,
+    getEthereumMADTokenBalance,
     getMADTokenStaking,
+    getEthereumVotingPower,
     stakeMADTokens,
     unstakeMADTokens,
     claimMADTokenRewards,

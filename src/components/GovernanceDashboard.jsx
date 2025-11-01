@@ -26,7 +26,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { walletService } from '../lib/walletService'
 
 export function GovernanceDashboard({ isOpen, onClose }) {
-  const { user, isAuthenticated } = useAuth()
+  const [selectedProposalChain, setSelectedProposalChain] = useState('bitcoin')
+
+  const { user, isAuthenticated, getEthereumVotingPower } = useAuth()
   const [activeTab, setActiveTab] = useState('proposals')
   const [proposals, setProposals] = useState([])
   const [selectedProposal, setSelectedProposal] = useState(null)
@@ -36,6 +38,7 @@ export function GovernanceDashboard({ isOpen, onClose }) {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [votingHistory, setVotingHistory] = useState([])
   const [governanceStats, setGovernanceStats] = useState(null)
+  const [selectedVotingMethod, setSelectedVotingMethod] = useState('bitcoin') // Default to Bitcoin
 
   // Check if user has test Runes (demo mode)
   const hasTestRunes = user?.runesBalance && parseInt(user.runesBalance) > 0
@@ -89,38 +92,72 @@ export function GovernanceDashboard({ isOpen, onClose }) {
       const response = await fetch('http://localhost:3001/api/governance/stats')
       const data = await response.json()
       setGovernanceStats(data)
+
+      if (user?.ethereumAddress) {
+        const ethVotingPower = await getEthereumVotingPower(user.ethereumAddress)
+        setGovernanceStats(prevStats => ({ ...prevStats, ethereumVotingPower: ethVotingPower.votingPower }))
+      }
     } catch (error) {
       console.error('Failed to load governance stats:', error)
     }
   }
 
-  const handleVote = async (proposalId, support) => {
+  const handleVote = async (proposalId, support, votingMethod) => {
     try {
-      if (!user?.btcAddress) {
-        setError('Bitcoin wallet not connected. Please connect your Bitcoin wallet first.')
-        return
-      }
+      if (votingMethod === 'ethereum') {
+        if (!user?.ethereumAddress) {
+          setError('Ethereum wallet not connected. Please connect your Ethereum wallet first.')
+          return
+        }
 
-      // Connect Bitcoin wallet and sign message
-      const bitcoinWallet = await walletService.connectBitcoinWallet()
-      const message = `Vote on proposal ${proposalId}: ${support ? 'FOR' : 'AGAINST'}`
-      const signature = await walletService.signBitcoinMessage(message, bitcoinWallet)
+        // Connect Ethereum wallet and sign message
+        const ethereumWallet = await walletService.connectEthereumWallet()
+        const message = `Vote on proposal ${proposalId}: ${support ? 'FOR' : 'AGAINST'}`
+        const signature = await walletService.signEthereumMessage(message, ethereumWallet)
 
-      // Submit vote
-      const response = await fetch(`http://localhost:3001/api/governance/proposals/${proposalId}/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          support,
-          btcSignature: signature
+        // Submit Ethereum vote
+        const response = await fetch(`/api/ethereum/governance/proposals/${proposalId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({
+            support,
+            ethereumSignature: signature
+          })
         })
-      })
 
-      if (!response.ok) {
-        throw new Error('Failed to submit vote')
+        if (!response.ok) {
+          throw new Error('Failed to submit Ethereum vote')
+        }
+      } else { // Default to Bitcoin voting
+        if (!user?.btcAddress) {
+          setError('Bitcoin wallet not connected. Please connect your Bitcoin wallet first.')
+          return
+        }
+
+        // Connect Bitcoin wallet and sign message
+        const bitcoinWallet = await walletService.connectBitcoinWallet()
+        const message = `Vote on proposal ${proposalId}: ${support ? 'FOR' : 'AGAINST'}`
+        const signature = await walletService.signBitcoinMessage(message, bitcoinWallet)
+
+        // Submit Bitcoin vote
+        const response = await fetch(`http://localhost:3001/api/governance/proposals/${proposalId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({
+            support,
+            btcSignature: signature
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to submit Bitcoin vote')
+        }
       }
 
       // Show success message
@@ -141,13 +178,17 @@ export function GovernanceDashboard({ isOpen, onClose }) {
   const handleCreateProposal = async (e) => {
     e.preventDefault()
     try {
+      const payload = {
+        ...proposalForm,
+        chain: selectedProposalChain,
+      }
       const response = await fetch('http://localhost:3001/api/governance/proposals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
-        body: JSON.stringify(proposalForm)
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
@@ -235,41 +276,49 @@ export function GovernanceDashboard({ isOpen, onClose }) {
 
         <div className="p-6">
           {/* Wallet Status */}
-          {user?.btcAddress ? (
+          {user?.btcAddress || user?.ethereumAddress ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
                   <div>
-                    <p className="font-medium text-green-800">Bitcoin Wallet Connected</p>
-                    <p className="text-sm text-green-700">
-                      {user.runesBalance || 0} Runes | {user.votingPower || 0} Voting Power
-                    </p>
+                    <p className="font-medium text-green-800">Wallet Connected</p>
+                    <div className="text-sm text-green-700">
+                      {user?.btcAddress && (
+                        <p>{user.runesBalance || 0} Runes | {user.votingPower || 0} Bitcoin Voting Power</p>
+                      )}
+                      {user?.ethereumAddress && (
+                        <p>{governanceStats?.ethereumVotingPower || 0} Ethereum Voting Power</p>
+                      )}
+                    </div>
                     {isDemoMode && (
                       <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
                         <p className="text-xs text-blue-700">
-                          🧪 <strong>Demo Mode:</strong> Using test Runes for demonstration. 
-                          You can create proposals and vote with these test Runes!
+                          You are in demo mode. Your Runes are for testing purposes only.
                         </p>
                       </div>
                     )}
                   </div>
                 </div>
-                {isDemoMode && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    Demo Mode
-                  </Badge>
-                )}
+                <Select value={selectedVotingMethod} onValueChange={setSelectedVotingMethod}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select voting method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {user?.btcAddress && <SelectItem value="bitcoin">Bitcoin</SelectItem>}
+                    {user?.ethereumAddress && <SelectItem value="ethereum">Ethereum</SelectItem>}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           ) : (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-orange-600 mr-3" />
+                <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
                 <div>
-                  <p className="font-medium text-orange-800">Bitcoin Wallet Required</p>
-                  <p className="text-sm text-orange-700">
-                    Connect your Bitcoin wallet to participate in governance
+                  <p className="font-medium text-red-800">No Wallet Connected</p>
+                  <p className="text-sm text-red-700">
+                    Please connect your Bitcoin or Ethereum wallet to participate in governance.
                   </p>
                 </div>
               </div>
@@ -399,17 +448,17 @@ export function GovernanceDashboard({ isOpen, onClose }) {
                         </div>
                       </div>
                       
-                      {proposal.status === 'ACTIVE' && user?.btcAddress && (
+                      {proposal.status === 'ACTIVE' && (user?.btcAddress || user?.ethereumAddress) && (
                         <div className="flex space-x-2">
                           <Button
-                            onClick={() => handleVote(proposal.id, true)}
+                            onClick={() => handleVote(proposal.id, true, selectedVotingMethod)}
                             className="flex-1 bg-green-600 hover:bg-green-700"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Vote For
                           </Button>
                           <Button
-                            onClick={() => handleVote(proposal.id, false)}
+                            onClick={() => handleVote(proposal.id, false, selectedVotingMethod)}
                             variant="outline"
                             className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
                           >
@@ -429,102 +478,77 @@ export function GovernanceDashboard({ isOpen, onClose }) {
           {activeTab === 'create' && (
             <div className="max-w-2xl">
               <Card>
-                <CardHeader>
-                  <CardTitle>Create New Proposal</CardTitle>
-                  <CardDescription>
-                    {isDemoMode ? (
-                      <span className="text-blue-700">
-                        🧪 <strong>Demo Mode:</strong> You can create proposals with your test Runes! 
-                        In production, you'd need at least 100 real Runes.
-                      </span>
-                    ) : (
-                      'Propose changes to the DAO. You need at least 100 Runes to create proposals.'
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleCreateProposal} className="space-y-4">
-                    <div>
-                      <Label htmlFor="title">Proposal Title</Label>
-                      <Input
-                        id="title"
-                        value={proposalForm.title}
-                        onChange={(e) => setProposalForm(prev => ({ ...prev, title: e.target.value }))}
-                        placeholder="Brief, descriptive title"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={proposalForm.description}
-                        onChange={(e) => setProposalForm(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Detailed description of your proposal"
-                        rows={4}
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="proposalType">Proposal Type</Label>
-                      <Select 
-                        value={proposalForm.proposalType}
-                        onValueChange={(value) => setProposalForm(prev => ({ ...prev, proposalType: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="DATA_CURATION">
-                            <div className="flex items-center">
-                              <Database className="h-4 w-4 mr-2" />
-                              Data Curation
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="GOVERNANCE">
-                            <div className="flex items-center">
-                              <Settings className="h-4 w-4 mr-2" />
-                              Governance
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="TREASURY">
-                            <div className="flex items-center">
-                              <BarChart className="h-4 w-4 mr-2" />
-                              Treasury
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="TECHNICAL">
-                            <div className="flex items-center">
-                              <FileText className="h-4 w-4 mr-2" />
-                              Technical
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="duration">Voting Duration (days)</Label>
-                      <Input
-                        id="duration"
-                        type="number"
-                        min="1"
-                        max="30"
-                        value={proposalForm.duration}
-                        onChange={(e) => setProposalForm(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-                        required
-                      />
-                    </div>
-                    
-                    <Button type="submit" className="w-full">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Proposal
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                <DialogHeader>
+                  <DialogTitle>Create New Proposal</DialogTitle>
+                  <DialogDescription>
+                    Fill in the details for your new governance proposal.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateProposal} className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="title" className="text-right">Title</Label>
+                    <Input
+                      id="title"
+                      value={proposalForm.title}
+                      onChange={(e) => setProposalForm({ ...proposalForm, title: e.target.value })}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="description" className="text-right">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={proposalForm.description}
+                      onChange={(e) => setProposalForm({ ...proposalForm, description: e.target.value })}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="proposalType" className="text-right">Type</Label>
+                    <Select
+                      value={proposalForm.proposalType}
+                      onValueChange={(value) => setProposalForm({ ...proposalForm, proposalType: value })}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select proposal type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DATA_CURATION">Data Curation</SelectItem>
+                        <SelectItem value="TREASURY">Treasury</SelectItem>
+                        <SelectItem value="GOVERNANCE">Governance</SelectItem>
+                        <SelectItem value="TECHNICAL">Technical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="duration" className="text-right">Duration (days)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      value={proposalForm.duration}
+                      onChange={(e) => setProposalForm({ ...proposalForm, duration: parseInt(e.target.value) })}
+                      className="col-span-3"
+                      min="1"
+                      max="30"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="chain" className="text-right">Chain</Label>
+                    <Select
+                      value={selectedProposalChain}
+                      onValueChange={setSelectedProposalChain}
+                    >
+                      {user?.btcAddress && <SelectItem value="bitcoin">Bitcoin</SelectItem>}
+                      {user?.ethereumAddress && <SelectItem value="ethereum">Ethereum</SelectItem>}
+                    </Select>
+                  </div>
+                </form>
+                <DialogFooter>
+                  <Button type="submit" onClick={handleCreateProposal}>Create Proposal</Button>
+                </DialogFooter>
             </div>
           )}
 

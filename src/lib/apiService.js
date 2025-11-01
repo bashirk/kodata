@@ -90,9 +90,8 @@ class ApiService {
     return this.request('/api/users/profile');
   }
 
-  // Submission endpoints
-  async createSubmission(submissionData) {
-    return this.request('/api/submissions', {
+  async createEthereumSubmission(submissionData) {
+    return this.request('/api/ethereum/submissions', {
       method: 'POST',
       body: JSON.stringify(submissionData),
     });
@@ -195,16 +194,16 @@ class ApiService {
     });
   }
 
-  async transferTokens(to, amount, from) {
-    return this.request('/api/mad-token/transfer', {
-      method: 'POST',
-      body: JSON.stringify({ to, amount, from }),
-    });
+  async getEthereumTransactionStatus(txHash) {
+    return this.request(`/api/ethereum/transaction/${txHash}/status`);
   }
 
   // Blockchain status
-  async getBlockchainStatus() {
-    return this.request('/api/blockchain/status');
+  async ethereumMadTokenTransfer(to, amount, from) {
+    return this.request('/api/ethereum/mad-token/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ to, amount, from }),
+    });
   }
 
   // Health check
@@ -272,8 +271,15 @@ class ApiService {
     return this.request(`/api/governance/voting-history/${userId}`);
   }
 
-  async getGovernanceStats() {
-    return this.request('/api/governance/stats');
+  async ethereumVoteOnProposal(proposalId, voteData) {
+    return this.request(`/api/ethereum/governance/proposals/${proposalId}/vote`, {
+      method: 'POST',
+      body: JSON.stringify(voteData),
+    });
+  }
+
+  async getEthereumVotingPower(address) {
+    return this.request(`/api/ethereum/governance/voting-power/${address}`);
   }
 }
 

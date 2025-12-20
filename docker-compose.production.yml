@@ -27,8 +27,6 @@ services:
     image: redis:7-alpine
     container_name: kodata-redis
     restart: unless-stopped
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:

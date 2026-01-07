@@ -1,0 +1,49 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Copy files to Azure VM
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }}
+          username: ${{ secrets.AZURE_VM_USERNAME }}
+          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          source: "."
+          target: "/opt/kodata/app"
+          strip_components: 0
+
+      - name: Deploy on Azure VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }}
+          username: ${{ secrets.AZURE_VM_USERNAME }}
+          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          script: |
+            cd /opt/kodata/app
+            
+            # Ensure .env exists (assuming it was manually created once, or use secrets to write it)
+            if [ ! -f .env ]; then
+              echo "Error: .env file missing in /opt/kodata/app"
+              exit 1
+            fi
+            
+            # Build and restart services
+            echo "🚀 Starting deployment..."
+            docker-compose build --no-cache
+            docker-compose up -d
+            
+            # Run migrations
+            echo "🗄️ Running migrations..."
+            docker-compose exec -T backend pnpm run db:push
+            
+            echo "✅ Deployment complete!"

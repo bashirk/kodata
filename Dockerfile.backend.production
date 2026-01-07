@@ -13,7 +13,11 @@ COPY backend/package.json backend/pnpm-lock.yaml ./
 RUN pnpm install
 
 # Copy source code
+# Copy source code
 COPY backend/ .
+
+# Generate Prisma client before build
+RUN npx prisma generate
 
 # Build the application
 RUN pnpm run build

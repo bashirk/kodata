@@ -9,35 +9,23 @@ This guide will help you set up the KoData DAO application with web3 backend int
 - PostgreSQL (if running locally)
 - Redis (if running locally)
 
-## Quick Start with Docker
+## Quick Start / Deployment
 
-1. **Clone and setup environment:**
+1. **Clone and setup:**
    ```bash
-   git clone <your-repo>
-   cd kodata-website
+   git clone <your-repo> app
+   cd app
    
-   # Copy environment files
-   cp backend/env.example backend/.env
-   cp env.example .env.local
+   # Copy environment file
+   cp env.production.example .env
    ```
 
 2. **Configure environment variables:**
-   
-   Edit `backend/.env` with your blockchain credentials:
-   ```bash
-   # Starknet Configuration
-   STARKNET_RPC_URL="https://starknet-testnet.public.blastapi.io"
-   STARKNET_ACCOUNT_ADDRESS="0x..." # Your Starknet account
-   STARKNET_PRIVATE_KEY="0x..."     # Your private key
-   STARKNET_CONTRACT_ADDRESS="0x..." # Your deployed contract
-   
-   # Lisk Configuration  
-   LISK_BACKEND_PUBKEY="..."        # Your Lisk public key
-   LISK_BACKEND_PRIVKEY="..."       # Your Lisk private key
-   ```
+   Edit `.env` with your credentials (database, blockchain, etc.).
 
-3. **Start all services:**
+3. **Deploy:**
    ```bash
+   docker-compose build --no-cache
    docker-compose up -d
    ```
 
@@ -47,7 +35,7 @@ This guide will help you set up the KoData DAO application with web3 backend int
    ```
 
 5. **Access the application:**
-   - Frontend: http://localhost:5173
+   - Frontend: http://localhost (or your server IP)
    - Backend API: http://localhost:3001
    - API Docs: http://localhost:3001/
 
@@ -205,28 +193,6 @@ docker-compose logs frontend
 # Backend logs appear in terminal running pnpm run dev
 # Frontend logs appear in browser console
 ```
-
-## Production Deployment
-
-1. **Build for production:**
-   ```bash
-   # Backend
-   cd backend
-   pnpm run build:prod
-   
-   # Frontend
-   pnpm run build
-   ```
-
-2. **Deploy with Docker:**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
-
-3. **Environment variables:**
-   - Set production values in environment
-   - Use production database and Redis instances
-   - Configure proper CORS origins
 
 ## Security Notes
 

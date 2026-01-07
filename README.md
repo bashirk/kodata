@@ -59,23 +59,23 @@ KoData is a youth-focused data literacy and context engineering initiative that 
 ### Option 1: Docker (Recommended)
 ```bash
 # Clone and setup
-git clone <repository-url>
-cd kodata-website
+git clone <repository-url> app
+cd app
 
-# Copy environment files
-cp backend/env.example backend/.env
-cp env.example .env.local
+# Copy environment file
+cp env.production.example .env
 
-# Edit backend/.env with your blockchain credentials
-# STARKNET_RPC_URL, STARKNET_ACCOUNT_ADDRESS, etc.
+# Edit .env with your credentials
+# POSTGRES_PASSWORD, STARKNET_RPC_URL, etc.
 
-# Start all services
+# Build and start
+docker-compose build --no-cache
 docker-compose up -d
 
 # Initialize database
 docker-compose exec backend pnpm run db:push
 
-# Access: Frontend http://localhost:5173, Backend http://localhost:3001
+# Access: Frontend http://localhost, Backend http://localhost:3001
 ```
 
 ### Option 2: Local Development

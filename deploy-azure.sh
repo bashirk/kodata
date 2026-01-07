@@ -39,10 +39,12 @@ fi
 
 # Pull latest images and build
 echo "🔨 Building and starting services..."
-docker-compose -f docker-compose.production.yml down
-docker-compose -f docker-compose.production.yml pull
-docker-compose -f docker-compose.production.yml build --no-cache
-docker-compose -f docker-compose.production.yml up -d
+# Pull latest images and build
+echo "🔨 Building and starting services..."
+docker-compose down
+docker-compose pull
+docker-compose build --no-cache
+docker-compose up -d
 
 # Wait for services to be healthy
 echo "⏳ Waiting for services to be healthy..."
@@ -50,11 +52,13 @@ sleep 30
 
 # Check service health
 echo "🔍 Checking service health..."
-docker-compose -f docker-compose.production.yml ps
+# Check service health
+echo "🔍 Checking service health..."
+docker-compose ps
 
 # Run database migrations
 echo "🗄️  Running database migrations..."
-docker-compose -f docker-compose.production.yml exec backend pnpm run db:push
+docker-compose exec backend pnpm run db:push
 
 echo "✅ Deployment completed!"
 echo ""
@@ -63,10 +67,10 @@ echo "   Frontend: http://$(curl -s ifconfig.me):80"
 echo "   Backend API: http://$(curl -s ifconfig.me):3001"
 echo ""
 echo "📊 To view logs:"
-echo "   docker-compose -f docker-compose.production.yml logs -f"
+echo "   docker-compose logs -f"
 echo ""
 echo "🔄 To restart services:"
-echo "   docker-compose -f docker-compose.production.yml restart"
+echo "   docker-compose restart"
 echo ""
 echo "🛑 To stop services:"
-echo "   docker-compose -f docker-compose.production.yml down"
+echo "   docker-compose down"

@@ -65,19 +65,19 @@ app.post('/api/test/starknet-approval', async (req, res) => {
     if (!submissionId) {
       return res.status(400).json({ error: 'submissionId is required' });
     }
-    
+
     console.log(`🧪 Testing Starknet approval for submission: ${submissionId}`);
     const txHash = await starknetService.approveSubmission(submissionId);
-    
-    return res.json({ 
-      success: true, 
+
+    return res.json({
+      success: true,
       message: 'Starknet approval test successful',
       submissionId,
-      txHash 
+      txHash
     });
   } catch (error) {
     console.error('Starknet test error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: error instanceof Error ? error.message : 'Unknown error',
       details: error instanceof Error ? error.stack : String(error)
     });
@@ -96,7 +96,7 @@ app.get('/ready', async (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Data DAO Backend API',
     version: '1.0.0',
     endpoints: ['/health', '/ready', '/api/auth', '/api/submissions', '/api/users'],
@@ -150,19 +150,19 @@ app.get('/api/users/profile', authenticateToken, async (req, res) => {
 // Submission endpoints
 app.post('/api/submissions', authenticateToken, async (req, res) => {
   try {
-    const { 
-      taskId, 
-      resultHash, 
-      storageUri, 
-      title, 
-      description, 
-      dataType, 
-      tags, 
+    const {
+      taskId,
+      resultHash,
+      storageUri,
+      title,
+      description,
+      dataType,
+      tags,
       license,
       contributionType,
       file
     } = req.body;
-    
+
     console.log('📝 Creating submission with data:', {
       taskId,
       title,
@@ -171,13 +171,13 @@ app.post('/api/submissions', authenticateToken, async (req, res) => {
       contributionType,
       userId: req.user.id
     });
-    
+
     // Validate required fields
     if (!title || !description) {
       res.status(400).json({ error: 'Title and description are required' });
       return;
     }
-    
+
     // Create submission with proper data curation fields
     const submission = await prisma.submission.create({
       data: {
@@ -203,7 +203,7 @@ app.post('/api/submissions', authenticateToken, async (req, res) => {
         }
       }
     });
-    
+
     console.log(`✅ Submission created successfully: ${submission.id} by user ${req.user.id}`);
     console.log(`📊 Submission details:`, {
       id: submission.id,
@@ -212,7 +212,7 @@ app.post('/api/submissions', authenticateToken, async (req, res) => {
       contributionType,
       status: submission.status
     });
-    
+
     // Process submission through data curation service
     try {
       const curationResult = await dataCurationService.processSubmission(submission.id);
@@ -222,12 +222,12 @@ app.post('/api/submissions', authenticateToken, async (req, res) => {
         valid: curationResult.valid,
         issuesCount: curationResult.issues.length
       });
-      
+
       // Update submission with curation results
       const updatedSubmission = await prisma.submission.findUnique({
         where: { id: submission.id }
       });
-      
+
       res.json({
         submission: updatedSubmission,
         curation: curationResult,
@@ -243,7 +243,7 @@ app.post('/api/submissions', authenticateToken, async (req, res) => {
     }
   } catch (error) {
     console.error('❌ Failed to create submission:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create submission',
       details: error instanceof Error ? error.message : String(error)
     });
@@ -256,9 +256,9 @@ app.get('/api/submissions', authenticateToken, async (req, res) => {
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id }
     });
-    
+
     const isAdmin = currentUser && ((currentUser as any).isAdmin || (currentUser as any).role === 'ADMIN');
-    
+
     const submissions = await prisma.submission.findMany({
       where: isAdmin ? {} : { userId: req.user.id }, // Admin sees all, users see only their own
       include: {
@@ -273,13 +273,13 @@ app.get('/api/submissions', authenticateToken, async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
-    
+
     // If no real submissions, return mock data for testing
     let finalSubmissions = submissions;
-    
+
     if (submissions.length === 0) {
       console.log(`🔄 No submissions found, returning mock submission data`);
-      
+
       // Generate mock submissions
       const mockSubmissions = [
         {
@@ -339,10 +339,10 @@ app.get('/api/submissions', authenticateToken, async (req, res) => {
           }
         }
       ];
-      
+
       finalSubmissions = mockSubmissions;
     }
-    
+
     res.json({ submissions: finalSubmissions, isAdmin });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch submissions' });
@@ -352,17 +352,17 @@ app.get('/api/submissions', authenticateToken, async (req, res) => {
 app.get('/api/submissions/:id', authenticateToken, async (req, res) => {
   try {
     const submission = await prisma.submission.findFirst({
-      where: { 
+      where: {
         id: req.params.id,
-        userId: req.user.id 
+        userId: req.user.id
       }
     });
-    
+
     if (!submission) {
       res.status(404).json({ error: 'Submission not found' });
       return;
     }
-    
+
     res.json(submission);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch submission' });
@@ -376,20 +376,20 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
       where: { id: req.params.id },
       include: { user: true }
     });
-    
+
     if (!submission) {
       res.status(404).json({ error: 'Submission not found' });
       return;
     }
-    
+
     if (submission.status !== 'PENDING') {
       res.status(400).json({ error: 'Submission is not in pending status' });
       return;
     }
-    
+
     // Try to approve on Starknet with fallback
-    let starknetTxHash = null;
-    let starknetError = null;
+    let starknetTxHash: string | null = null;
+    let starknetError: string | null = null;
     try {
       starknetTxHash = await starknetService.approveSubmission(submission.id);
       console.log('✅ Starknet approval successful:', starknetTxHash);
@@ -397,23 +397,23 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
       console.warn('⚠️ Starknet approval failed, continuing with database update:', error instanceof Error ? error.message : String(error));
       starknetError = error instanceof Error ? error.message : String(error);
     }
-    
+
     // Calculate MAD token reward based on quality score
     const baseReward = 100; // Base reward: 100 MAD tokens
     const qualityMultiplier = 1.0; // Can be adjusted based on submission quality
     const rewardAmount = (baseReward * qualityMultiplier).toString();
-    
+
     // Mint MAD tokens to the submitter with fallback
-    let madTokenTxHash = null;
-    let rewardError = null;
+    let madTokenTxHash: string | null = null;
+    let rewardError: string | null = null;
     try {
       if (submission.user.starknetAddress) {
         console.log(`Minting ${rewardAmount} MAD tokens to ${submission.user.starknetAddress} for approved submission ${submission.id}`);
-        
+
         try {
           madTokenTxHash = await madTokenService.mintTokens(
-            submission.user.starknetAddress, 
-            rewardAmount, 
+            submission.user.starknetAddress,
+            rewardAmount,
             `approval_reward_submission_${submission.id}`
           );
           console.log(`✅ MAD tokens minted successfully: ${madTokenTxHash}`);
@@ -428,11 +428,11 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
       console.error('❌ MAD token reward error:', error);
       rewardError = error instanceof Error ? error.message : 'Unknown reward error';
     }
-    
+
     // Update submission status with reward information (always succeeds)
     const updatedSubmission = await prisma.submission.update({
       where: { id: submission.id },
-      data: { 
+      data: {
         status: 'APPROVED',
         qualityScore: 85, // Quality score based on review
         rewardAmount: rewardAmount,
@@ -440,15 +440,15 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
         rewardError: rewardError
       }
     });
-    
+
     // Queue submission for Lisk reputation processing
     try {
       await relayer.queueSubmission(submission.id);
     } catch (relayerError) {
       console.warn('⚠️ Relayer queue failed:', relayerError instanceof Error ? relayerError.message : String(relayerError));
     }
-    
-    res.json({ 
+
+    res.json({
       submission: updatedSubmission,
       starknetTxHash,
       starknetError,
@@ -469,21 +469,21 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
 app.get('/api/mad-token/info', async (req, res) => {
   try {
     const contractAddress = process.env.MAD_TOKEN_CONTRACT_ADDRESS;
-    
+
     if (!contractAddress) {
       return res.status(500).json({ error: 'MAD_TOKEN_CONTRACT_ADDRESS not set' });
     }
-    
+
     const tokenInfoCmd = `starkli call ${contractAddress} get_mad_token_info --network sepolia`;
     const tokenInfoOutput = execSync(tokenInfoCmd, { encoding: 'utf8', stdio: 'pipe' });
     const tokenInfo = JSON.parse(tokenInfoOutput);
-    
+
     // Decode token info
     const name = Buffer.from(tokenInfo[0].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
     const symbol = Buffer.from(tokenInfo[1].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
     const decimals = parseInt(tokenInfo[2], 16);
     const totalSupply = BigInt(tokenInfo[3]).toString();
-    
+
     return res.json({
       name,
       symbol,
@@ -498,18 +498,18 @@ app.get('/api/mad-token/info', async (req, res) => {
 app.get('/api/mad-token/balance/:address', async (req, res) => {
   try {
     const contractAddress = process.env.MAD_TOKEN_CONTRACT_ADDRESS;
-    
+
     if (!contractAddress) {
       return res.status(500).json({ error: 'MAD_TOKEN_CONTRACT_ADDRESS not set' });
     }
-    
+
     const balanceCmd = `starkli call ${contractAddress} get_mad_token_balance --network sepolia ${req.params.address}`;
     const balanceOutput = execSync(balanceCmd, { encoding: 'utf8', stdio: 'pipe' });
     const balance = JSON.parse(balanceOutput);
-    
-    return res.json({ 
-      address: req.params.address, 
-      balance: balance[0] 
+
+    return res.json({
+      address: req.params.address,
+      balance: balance[0]
     });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to get MAD token balance' });
@@ -529,11 +529,11 @@ app.post('/api/mad-token/stake', authenticateToken, async (req, res) => {
   try {
     const { amount } = req.body;
     const userAddress = req.user.starknetAddress;
-    
+
     if (!userAddress) {
       return res.status(400).json({ error: 'User has no Starknet address' });
     }
-    
+
     const txHash = await madTokenService.stakeTokens(amount, 30); // 30 days duration
     return res.json({ txHash, message: 'Staking transaction submitted' });
   } catch (error) {
@@ -545,11 +545,11 @@ app.post('/api/mad-token/unstake', authenticateToken, async (req, res) => {
   try {
     const { amount } = req.body;
     const userAddress = req.user.starknetAddress;
-    
+
     if (!userAddress) {
       return res.status(400).json({ error: 'User has no Starknet address' });
     }
-    
+
     const txHash = await madTokenService.unstakeTokens(amount);
     return res.json({ txHash, message: 'Unstaking transaction submitted' });
   } catch (error) {
@@ -591,7 +591,7 @@ app.post('/api/admin/mad-token/transfer', authenticateToken, async (req, res) =>
 app.get('/api/rewards/history/:userId', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // Get user's reward history from approved submissions
     const rewardHistory = await prisma.submission.findMany({
       where: {
@@ -612,14 +612,14 @@ app.get('/api/rewards/history/:userId', authenticateToken, async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
-    
+
     // If no real submissions, return mock data for testing
     let finalHistory = rewardHistory;
     let totalRewards = 0;
-    
+
     if (rewardHistory.length === 0) {
       console.log(`🔄 No submissions found for user ${userId}, returning mock reward history`);
-      
+
       // Generate mock reward history
       const mockHistory = [
         {
@@ -655,7 +655,7 @@ app.get('/api/rewards/history/:userId', authenticateToken, async (req, res) => {
           }
         }
       ];
-      
+
       finalHistory = mockHistory;
       totalRewards = 200; // 100 + 100
     } else {
@@ -664,7 +664,7 @@ app.get('/api/rewards/history/:userId', authenticateToken, async (req, res) => {
         return sum + (submission.rewardAmount ? parseInt(submission.rewardAmount) : 0);
       }, 0);
     }
-    
+
     return res.json({
       userId,
       totalRewards: totalRewards.toString(),
@@ -686,7 +686,7 @@ app.get('/api/rewards/stats', authenticateToken, async (req, res) => {
       },
       _count: true
     });
-    
+
     const rewardStats = await prisma.submission.groupBy({
       by: ['status'],
       _count: true,
@@ -694,7 +694,7 @@ app.get('/api/rewards/stats', authenticateToken, async (req, res) => {
         rewardAmount: { not: null }
       }
     });
-    
+
     return res.json({
       totalRewardTransactions: totalRewards._count,
       rewardStats: rewardStats
@@ -730,11 +730,11 @@ app.post('/api/curation/auto-approve', authenticateToken, async (req, res) => {
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id }
     });
-    
+
     if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Admin access required' });
     }
-    
+
     const result = await dataCurationService.autoApproveHighQuality();
     return res.json(result);
   } catch (error) {
@@ -746,21 +746,21 @@ app.post('/api/curation/auto-approve', authenticateToken, async (req, res) => {
 app.post('/api/mad-token/transfer', authenticateToken, async (req, res) => {
   try {
     const { to, amount, from } = req.body;
-    
+
     if (!to || !amount) {
       return res.status(400).json({ error: 'Recipient address and amount are required' });
     }
-    
+
     // Validate amount is a positive number
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
       return res.status(400).json({ error: 'Amount must be a positive number' });
     }
-    
+
     console.log(`🔄 Processing token transfer: ${amount} MAD from ${from || 'admin'} to ${to}`);
-    
+
     const txHash = await madTokenService.transferTokens(to, amount, from);
-    
+
     return res.json({
       success: true,
       transactionHash: txHash,
@@ -768,7 +768,7 @@ app.post('/api/mad-token/transfer', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Token transfer error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to transfer tokens',
       details: error instanceof Error ? error.message : String(error)
     });
@@ -778,17 +778,17 @@ app.post('/api/mad-token/transfer', authenticateToken, async (req, res) => {
 app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
   try {
     const { to, amount, reason } = req.body;
-    
+
     if (!to || !amount) {
       return res.status(400).json({ error: 'Recipient address and amount are required' });
     }
-    
+
     // Use the MAD token service to mint tokens securely
     try {
       const txHash = await madTokenService.mintTokens(to, amount, reason || 'manual reward');
-      
+
       console.log(`✅ Manual reward minted: ${amount} MAD tokens to ${to} (${reason || 'manual reward'})`);
-      
+
       return res.json({
         txHash,
         amount,
@@ -798,7 +798,7 @@ app.post('/api/admin/rewards/manual', authenticateToken, async (req, res) => {
       });
     } catch (mintError) {
       console.error('❌ Manual reward minting failed:', mintError instanceof Error ? mintError.message : String(mintError));
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to mint manual reward',
         details: mintError instanceof Error ? mintError.message : String(mintError)
       });
@@ -815,11 +815,11 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id }
     });
-    
+
     if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Admin access required' });
     }
-    
+
     // Get all users with their submission counts
     const users = await prisma.user.findMany({
       include: {
@@ -831,7 +831,7 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
-    
+
     return res.json({ users });
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get users' });
@@ -844,18 +844,18 @@ app.post('/api/admin/users/:userId/promote', authenticateToken, async (req, res)
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id }
     });
-    
+
     if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Admin access required' });
     }
-    
+
     const { userId } = req.params;
     const { role } = req.body;
-    
+
     if (!['ADMIN', 'MODERATOR'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role. Must be ADMIN or MODERATOR' });
     }
-    
+
     // Update user role
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -866,9 +866,9 @@ app.post('/api/admin/users/:userId/promote', authenticateToken, async (req, res)
         adminApprovedAt: new Date()
       } as any
     });
-    
+
     console.log(`✅ User ${userId} promoted to ${role} by admin ${req.user.id}`);
-    
+
     return res.json({
       user: updatedUser,
       message: `User promoted to ${role} successfully`
@@ -884,18 +884,18 @@ app.post('/api/admin/users/:userId/demote', authenticateToken, async (req, res) 
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id }
     });
-    
+
     if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Admin access required' });
     }
-    
+
     const { userId } = req.params;
-    
+
     // Prevent self-demotion
     if (userId === req.user.id) {
       return res.status(400).json({ error: 'Cannot demote yourself' });
     }
-    
+
     // Update user role to USER
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -906,9 +906,9 @@ app.post('/api/admin/users/:userId/demote', authenticateToken, async (req, res) 
         adminApprovedAt: null
       } as any
     });
-    
+
     console.log(`✅ User ${userId} demoted to USER by admin ${req.user.id}`);
-    
+
     return res.json({
       user: updatedUser,
       message: 'User demoted successfully'
@@ -925,27 +925,27 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user.id }
     });
-    
+
     if (!currentUser || (!(currentUser as any).isAdmin && (currentUser as any).role !== 'ADMIN')) {
       return res.status(403).json({ error: 'Admin access required' });
     }
-    
+
     const submission = await prisma.submission.findUnique({
       where: { id: req.params.id },
       include: { user: true }
     });
-    
+
     if (!submission) {
       return res.status(404).json({ error: 'Submission not found' });
     }
-    
+
     if (submission.status !== 'PENDING') {
       return res.status(400).json({ error: 'Submission is not in pending status' });
     }
-    
+
     // Try to approve on Starknet with fallback
-    let starknetTxHash = null;
-    let starknetError = null;
+    let starknetTxHash: string | null = null;
+    let starknetError: string | null = null;
     try {
       starknetTxHash = await starknetService.approveSubmission(submission.id);
       console.log('✅ Starknet approval successful:', starknetTxHash);
@@ -953,22 +953,22 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
       console.warn('⚠️ Starknet approval failed, continuing with database update:', error instanceof Error ? error.message : String(error));
       starknetError = error instanceof Error ? error.message : String(error);
     }
-    
+
     // Calculate rewards
     const submitterReward = 100; // Base reward: 100 MAD tokens
     const adminReward = 25; // Admin reward: 25 MAD tokens for approving
-    
+
     // Mint tokens to submitter with fallback
-    let submitterTxHash = null;
-    let submitterError = null;
+    let submitterTxHash: string | null = null;
+    let submitterError: string | null = null;
     try {
       if (submission.user.starknetAddress) {
         console.log(`Minting ${submitterReward} MAD tokens to ${submission.user.starknetAddress} for approved submission ${submission.id}`);
-        
+
         try {
           submitterTxHash = await madTokenService.mintTokens(
-            submission.user.starknetAddress, 
-            submitterReward.toString(), 
+            submission.user.starknetAddress,
+            submitterReward.toString(),
             `approval_reward_submission_${submission.id}`
           );
           console.log(`✅ Submitter tokens minted successfully: ${submitterTxHash}`);
@@ -983,18 +983,18 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
       console.error('❌ Submitter token reward error:', error);
       submitterError = error instanceof Error ? error.message : 'Unknown reward error';
     }
-    
+
     // Mint tokens to admin with fallback
-    let adminTxHash = null;
-    let adminError = null;
+    let adminTxHash: string | null = null;
+    let adminError: string | null = null;
     try {
       if (currentUser.starknetAddress) {
         console.log(`Minting ${adminReward} MAD tokens to admin ${currentUser.starknetAddress} for approving submission ${submission.id}`);
-        
+
         try {
           adminTxHash = await madTokenService.mintTokens(
-            currentUser.starknetAddress, 
-            adminReward.toString(), 
+            currentUser.starknetAddress,
+            adminReward.toString(),
             `admin_approval_reward_submission_${submission.id}`
           );
           console.log(`✅ Admin tokens minted successfully: ${adminTxHash}`);
@@ -1009,11 +1009,11 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
       console.error('❌ Admin token reward error:', error);
       adminError = error instanceof Error ? error.message : 'Unknown reward error';
     }
-    
+
     // Update submission status with reward information (always succeeds)
     const updatedSubmission = await prisma.submission.update({
       where: { id: submission.id },
-      data: { 
+      data: {
         status: 'APPROVED',
         qualityScore: 85, // Quality score based on review
         rewardAmount: submitterReward.toString(),
@@ -1021,15 +1021,15 @@ app.post('/api/admin/approve-submission/:id', authenticateToken, async (req, res
         rewardError: submitterError
       }
     });
-    
+
     // Queue submission for Lisk reputation processing
     try {
       await relayer.queueSubmission(submission.id);
     } catch (relayerError) {
       console.warn('⚠️ Relayer queue failed:', relayerError instanceof Error ? relayerError.message : String(relayerError));
     }
-    
-    return res.json({ 
+
+    return res.json({
       submission: updatedSubmission,
       starknetTxHash,
       starknetError,
@@ -1086,26 +1086,26 @@ app.get('/api/blockchain/status', async (req, res) => {
     // Test Starknet connection using starkli
     try {
       console.log('Testing Starknet connection...');
-      
+
       // Test contract info
       const contractInfoCmd = `starkli call ${process.env.STARKNET_CONTRACT_ADDRESS} get_contract_info --network sepolia`;
       const contractInfoOutput = execSync(contractInfoCmd, { encoding: 'utf8', stdio: 'pipe' });
       const contractInfo = JSON.parse(contractInfoOutput);
-      
+
       // Decode the contract info (it's in hex)
       const name = Buffer.from(contractInfo[0].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
       const version = Buffer.from(contractInfo[1].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
-      
+
       // Test admin
       const adminCmd = `starkli call ${process.env.STARKNET_CONTRACT_ADDRESS} get_admin --network sepolia`;
       const adminOutput = execSync(adminCmd, { encoding: 'utf8', stdio: 'pipe' });
       const admin = JSON.parse(adminOutput)[0];
-      
+
       // Test submission count
       const submissionCountCmd = `starkli call ${process.env.STARKNET_CONTRACT_ADDRESS} get_submission_count --network sepolia`;
       const submissionCountOutput = execSync(submissionCountCmd, { encoding: 'utf8', stdio: 'pipe' });
       const submissionCount = JSON.parse(submissionCountOutput);
-      
+
       status.starknet.connected = true;
       status.starknet.workProof = {
         connected: true,
@@ -1141,13 +1141,13 @@ app.get('/api/blockchain/status', async (req, res) => {
         const tokenInfoCmd = `starkli call ${process.env.MAD_TOKEN_CONTRACT_ADDRESS} get_mad_token_info --network sepolia`;
         const tokenInfoOutput = execSync(tokenInfoCmd, { encoding: 'utf8', stdio: 'pipe' });
         const tokenInfo = JSON.parse(tokenInfoOutput);
-        
+
         // Decode token info
         const name = Buffer.from(tokenInfo[0].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
         const symbol = Buffer.from(tokenInfo[1].replace('0x', ''), 'hex').toString('utf8').replace(/\0/g, '');
         const decimals = parseInt(tokenInfo[2], 16);
         const totalSupply = BigInt(tokenInfo[3]).toString();
-        
+
         status.madToken = {
           connected: true,
           contractAddress: process.env.MAD_TOKEN_CONTRACT_ADDRESS,
@@ -1163,7 +1163,7 @@ app.get('/api/blockchain/status', async (req, res) => {
         status.madToken.message = `Connection failed: ${error instanceof Error ? error.message : String(error)}`;
       }
     }
-    
+
     res.json(status);
   } catch (error) {
     console.error('Blockchain status error:', error);
@@ -1195,7 +1195,7 @@ async function startServer() {
 // ✅ Corrected Graceful shutdown logic
 const shutdown = async () => {
   console.log('Shutdown signal received, closing connections gracefully.');
-  
+
   // 1. Stop the server from accepting new connections
   server.close(async () => {
     console.log('HTTP server closed.');
@@ -1204,7 +1204,7 @@ const shutdown = async () => {
     await relayer.stopListening();
     await PrismaSingleton.disconnect();
     console.log('Prisma and Relayer disconnected.');
-    
+
     // 3. Exit the process
     process.exit(0);
   });

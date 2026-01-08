@@ -43,11 +43,10 @@ export function Navigation() {
   }
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled 
-        ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-gray-200/50' 
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+        ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-gray-200/50'
         : 'bg-transparent'
-    }`}>
+      }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 lg:h-18">
           {/* Logo */}
@@ -55,30 +54,28 @@ export function Navigation() {
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
               <span className="text-white font-bold text-sm">KD</span>
             </div>
-            <span className={`text-xl font-bold transition-colors duration-300 ${
-              isScrolled ? 'text-gray-900' : 'text-white'
-            }`}>
+            <span className={`text-xl font-bold transition-colors duration-300 ${isScrolled ? 'text-gray-900' : 'text-gray-800'
+              }`}>
               KoData
             </span>
           </div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
               <button
                 key={item.href}
                 onClick={() => scrollToSection(item.href)}
-                className={`font-medium transition-all duration-300 hover:scale-105 ${
-                  isScrolled 
-                    ? 'text-gray-600 hover:text-gray-900' 
-                    : 'text-white/90 hover:text-white'
-                }`}
+                className={`font-medium transition-all duration-300 hover:scale-105 ${isScrolled
+                    ? 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-700 hover:text-gray-900'
+                  }`}
               >
                 {item.label}
               </button>
             ))}
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
@@ -86,12 +83,11 @@ export function Navigation() {
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Connected
                 </Badge>
-                <Button 
-                  className={`group relative rounded-full px-6 py-2 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
-                    isScrolled
+                <Button
+                  className={`group relative rounded-full px-6 py-2 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${isScrolled
                       ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white'
-                      : 'bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30'
-                  }`}
+                      : 'bg-green-600/10 text-green-700 border border-green-200 hover:bg-green-600/20'
+                    }`}
                   onClick={() => scrollToSection('#datadao')}
                 >
                   <span className="flex items-center">
@@ -102,12 +98,11 @@ export function Navigation() {
                 </Button>
               </div>
             ) : (
-              <Button 
-                className={`group relative rounded-full px-6 py-2 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
-                  isScrolled
+              <Button
+                className={`group relative rounded-full px-6 py-2 font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${isScrolled
                     ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
-                    : 'bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30'
-                }`}
+                    : 'bg-purple-600/10 text-purple-700 border border-purple-200 hover:bg-purple-600/20'
+                  }`}
                 onClick={() => scrollToSection('#datadao')}
               >
                 <span className="flex items-center">
@@ -117,21 +112,20 @@ export function Navigation() {
                 </span>
               </Button>
             )}
-             
+
             {/* Mobile menu button */}
             <button
-              className={`md:hidden p-2 rounded-lg transition-all duration-300 hover:scale-105 ${
-                isScrolled 
-                  ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100' 
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
-              }`}
+              className={`md:hidden p-2 rounded-lg transition-all duration-300 hover:scale-105 ${isScrolled
+                  ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
-        
+
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200/50 bg-white/95 backdrop-blur-lg rounded-b-xl shadow-lg">
@@ -146,7 +140,7 @@ export function Navigation() {
                 </button>
               ))}
               <div className="pt-2">
-                <Button 
+                <Button
                   className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold"
                   onClick={() => scrollToSection('#datadao')}
                 >

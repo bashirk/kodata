@@ -45,6 +45,10 @@ services:
       MAD_TOKEN_CONTRACT_ADDRESS: ${MAD_TOKEN_CONTRACT_ADDRESS}
       LISK_BACKEND_PUBKEY: ${LISK_BACKEND_PUBKEY}
       LISK_BACKEND_PRIVKEY: ${LISK_BACKEND_PRIVKEY}
+      ETH_RPC_URL: ${ETH_RPC_URL:-https://mainnet.infura.io/v3/your-project-id}
+      ETH_ACCOUNT_ADDRESS: ${ETH_ACCOUNT_ADDRESS}
+      ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
+      ETH_CONTRACT_ADDRESS: ${ETH_CONTRACT_ADDRESS}
     depends_on:
       - postgres
       - redis

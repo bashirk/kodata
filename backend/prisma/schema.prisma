@@ -19,6 +19,7 @@ model User {
   credits        Int       @default(3)
   starknetAddress String?
   liskAddress    String?    // Lisk address (e.g., base32 format)
+  ethereumAddress String?   // Ethereum address (0x...)
   btcAddress     String?
   reputation     Int       @default(0)
   role           UserRole  @default(USER)

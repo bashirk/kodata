@@ -346,8 +346,8 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
           <div className="grid lg:grid-cols-3 gap-8">
             {programs.map((program, index) => (
               <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-white/80 backdrop-blur-sm overflow-hidden ${index === 0 ? 'animate-stagger-1' :
-                  index === 1 ? 'animate-stagger-2' :
-                    'animate-stagger-3'
+                index === 1 ? 'animate-stagger-2' :
+                  'animate-stagger-3'
                 }`}>
                 {/* Gradient border effect */}
                 <div className={`absolute inset-0 bg-gradient-to-r ${program.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
@@ -417,8 +417,8 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm overflow-hidden ${index === 0 ? 'animate-stagger-1' :
-                  index === 1 ? 'animate-stagger-2' :
-                    'animate-stagger-3'
+                index === 1 ? 'animate-stagger-2' :
+                  'animate-stagger-3'
                 }`}>
                 {/* Quote decoration */}
                 <div className="absolute top-4 left-4 text-4xl text-purple-200 opacity-50 group-hover:opacity-75 transition-opacity duration-300">"</div>
@@ -478,6 +478,16 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
+              {
+                title: "Cowork with ETHGlobal in Lagos with KoData DAO",
+                description: "Join us for a collaborative coworking session with the ETHGlobal community in Lagos. Build, network, and grow together.",
+                date: "January 24, 2025",
+                location: "Lagos, Nigeria",
+                image: "/IMG_0775.jpg",
+                attendees: 120,
+                category: "Community",
+                url: "https://luma.com/9g4dg4rr"
+              },
               {
                 title: "Data Curation Masterclass",
                 description: "Learn how to curate and validate datasets for Web3 and AI applications",
@@ -553,9 +563,9 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                 <CardContent className="pt-0">
                   <Button
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                    onClick={() => window.open(index === 0 ? 'https://luma.com/9g4dg4rr' : 'mailto:hi@kobotai.co', '_blank')}
+                    onClick={() => window.open(event.url || 'mailto:hi@kobotai.co', '_blank')}
                   >
-                    {index === 0 ? 'Register on Luma' : 'Register Interest'}
+                    {event.url ? 'Register on Luma' : 'Register Interest'}
                   </Button>
                 </CardContent>
               </Card>

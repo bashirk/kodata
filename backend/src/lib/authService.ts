@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { address } from '@liskhq/lisk-cryptography';
-import { RpcProvider, Account } from 'starknet';
+import { RpcProvider } from 'starknet';
+import { ethers } from 'ethers';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import PrismaSingleton from './prisma';
@@ -15,7 +16,7 @@ export interface WalletSignature {
   address: string;
   signature: string;
   message: string;
-  walletType: 'starknet' | 'lisk';
+  walletType: 'starknet' | 'lisk' | 'ethereum';
 }
 
 export class AuthService {
@@ -38,7 +39,7 @@ export class AuthService {
     const nonce = crypto.randomBytes(32).toString('hex');
     const timestamp = Date.now();
     const message = `Sign this message to authenticate with KoData DAO\nNonce: ${nonce}\nTimestamp: ${timestamp}`;
-    
+
     return {
       nonce,
       message,
@@ -53,16 +54,16 @@ export class AuthService {
   async verifyStarknetSignature(signature: WalletSignature): Promise<boolean> {
     try {
       console.warn('⚠️ Starknet signature verification bypassed - accepting all properly formatted signatures');
-      
+
       // Basic format validation only
       if (!signature.address.startsWith('0x') || signature.address.length !== 66) {
         console.warn(`Invalid Starknet address format: ${signature.address}`);
         return false;
       }
-      
+
       // Handle different signature formats
       let signatureString = '';
-      
+
       if (typeof signature.signature === 'string') {
         // Standard string format
         signatureString = signature.signature;
@@ -79,12 +80,12 @@ export class AuthService {
         console.warn('Invalid signature format:', signature.signature);
         return false;
       }
-      
+
       if (!signatureString.startsWith('0x') || signatureString.length < 130) {
         console.warn(`Invalid Starknet signature format: ${signatureString}`);
         return false;
       }
-      
+
       // Accept all properly formatted signatures (bypassing cryptographic verification)
       console.log(`✅ Starknet signature format validation passed for address: ${signature.address}`);
       return true;
@@ -101,14 +102,14 @@ export class AuthService {
     try {
       // Parse the signature to extract the public key
       const signatureBuffer = Buffer.from(signature.signature.slice(2), 'hex');
-      
+
       // Verify the signature using Lisk cryptography
       const messageBuffer = Buffer.from(signature.message, 'utf8');
-      
+
       // For Lisk, we need to verify the signature against the message hash
       // This is a simplified verification - in production, you'd use the full Lisk signature verification
       const addressFromSignature = address.getAddressFromPublicKey(signatureBuffer);
-      
+
       if (addressFromSignature.toString('hex') !== signature.address) {
         console.warn(`Invalid Lisk signature for address: ${signature.address}`);
         return false;
@@ -118,6 +119,26 @@ export class AuthService {
       return true;
     } catch (error) {
       console.error('Lisk signature verification failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Verify Ethereum wallet signature using ethers
+   */
+  async verifyEthereumSignature(signature: WalletSignature): Promise<boolean> {
+    try {
+      const recoveredAddress = ethers.verifyMessage(signature.message, signature.signature);
+
+      if (recoveredAddress.toLowerCase() !== signature.address.toLowerCase()) {
+        console.warn(`Invalid Ethereum signature for address: ${signature.address}. Recovered: ${recoveredAddress}`);
+        return false;
+      }
+
+      console.log(`Successfully verified Ethereum signature for address: ${signature.address}`);
+      return true;
+    } catch (error) {
+      console.error('Ethereum signature verification failed:', error);
       return false;
     }
   }
@@ -133,6 +154,8 @@ export class AuthService {
         isValid = await this.verifyStarknetSignature(signature);
       } else if (signature.walletType === 'lisk') {
         isValid = await this.verifyLiskSignature(signature);
+      } else if (signature.walletType === 'ethereum') {
+        isValid = await this.verifyEthereumSignature(signature);
       }
 
       if (!isValid) {
@@ -144,7 +167,8 @@ export class AuthService {
         where: {
           OR: [
             { starknetAddress: signature.address },
-            { liskAddress: signature.address }
+            { liskAddress: signature.address },
+            { ethereumAddress: signature.address }
           ]
         }
       });
@@ -156,6 +180,7 @@ export class AuthService {
             email: `${signature.address}@wallet.local`, // Generate a unique email for wallet users
             starknetAddress: signature.walletType === 'starknet' ? signature.address : null,
             liskAddress: signature.walletType === 'lisk' ? signature.address : null,
+            ethereumAddress: signature.walletType === 'ethereum' ? signature.address : null,
             reputation: 0,
             credits: 3
           }
@@ -168,6 +193,9 @@ export class AuthService {
         }
         if (signature.walletType === 'lisk' && !user.liskAddress) {
           updateData.liskAddress = signature.address;
+        }
+        if (signature.walletType === 'ethereum' && !user.ethereumAddress) {
+          updateData.ethereumAddress = signature.address;
         }
 
         if (Object.keys(updateData).length > 0) {
@@ -199,7 +227,7 @@ export class AuthService {
       iss: 'kodata-dao',
       aud: 'kodata-users'
     };
-    
+
     return jwt.sign(payload, this.jwtSecret, { algorithm: 'HS256' });
   }
 
@@ -208,7 +236,7 @@ export class AuthService {
    */
   async verifyToken(token: string): Promise<any> {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret, { 
+      const decoded = jwt.verify(token, this.jwtSecret, {
         algorithms: ['HS256'],
         issuer: 'kodata-dao',
         audience: 'kodata-users'

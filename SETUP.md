@@ -13,8 +13,7 @@ This guide will help you set up the KoData DAO application with web3 backend int
 
 1. **Clone and setup:**
    ```bash
-   git clone <your-repo> app
-   cd app
+   sudo git clone https://github.com/bashirk/kodata.git app && cd app
    
    # Copy environment file
    cp env.production.example .env
@@ -26,7 +25,8 @@ This guide will help you set up the KoData DAO application with web3 backend int
 3. **Deploy:**
    ```bash
    docker-compose build --no-cache
-   docker-compose up -d
+   docker-compose down && docker-compose up -d
+   sudo nginx -t && sudo systemctl reload nginx
    ```
 
 4. **Initialize database:**

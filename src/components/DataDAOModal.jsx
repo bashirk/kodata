@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input.jsx'
 import { Label } from '@/components/ui/label.jsx'
 import { Textarea } from '@/components/ui/textarea.jsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.jsx'
-import { 
-  X, 
-  Database, 
-  Target, 
-  Award, 
-  Upload, 
-  Coins, 
+import {
+  X,
+  Database,
+  Target,
+  Award,
+  Upload,
+  Coins,
   CheckCircle,
   AlertCircle,
   FileText,
@@ -125,7 +125,7 @@ export function DataDAOModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
+
     try {
       // Create submission data
       const submissionData = {
@@ -135,15 +135,15 @@ export function DataDAOModal({ isOpen, onClose }) {
         contributionType: contributionType, // Add contribution type
         ...formData
       }
-      
+
       console.log('📤 Sending submission data:', submissionData)
-      
+
       // Submit to backend
       const submission = await createSubmission(submissionData)
-      
+
       setIsSubmitting(false)
       setIsSuccess(true)
-      
+
       // Reset after 3 seconds
       setTimeout(() => {
         setIsSuccess(false)
@@ -212,8 +212,8 @@ export function DataDAOModal({ isOpen, onClose }) {
               {isAuthenticated ? 'DataDAO Dashboard' : 'Join DataDAO'}
             </h2>
             <p className="text-gray-600">
-              {isAuthenticated ? 
-                'Manage your contributions and track your rewards' : 
+              {isAuthenticated ?
+                'Manage your contributions and track your rewards' :
                 'Contribute to our data ecosystem and earn MAD tokens'
               }
             </p>
@@ -269,7 +269,7 @@ export function DataDAOModal({ isOpen, onClose }) {
               <p className="text-gray-600 mb-6">
                 Connect your Web3 wallet to start contributing to our DataDAO and earn MAD tokens.
               </p>
-              
+
               {loginError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                   <div className="flex items-start">
@@ -283,7 +283,7 @@ export function DataDAOModal({ isOpen, onClose }) {
               )}
 
               <div className="space-y-4">
-                <Button 
+                <Button
                   onClick={() => handleWalletLogin('starknet')}
                   disabled={isLoggingIn}
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
@@ -296,9 +296,18 @@ export function DataDAOModal({ isOpen, onClose }) {
                   ) : (
                     <>
                       <Wallet className="mr-2 h-4 w-4" />
-                      Connect Wallet
+                      Connect Starknet Wallet
                     </>
                   )}
+                </Button>
+
+                <Button
+                  onClick={() => handleWalletLogin('ethereum')}
+                  disabled={isLoggingIn}
+                  className="w-full bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white"
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  Connect Ethereum Wallet
                 </Button>
 
                 {/* Lisk wallet temporarily hidden */}
@@ -316,9 +325,9 @@ export function DataDAOModal({ isOpen, onClose }) {
               <div className="mt-6 text-sm text-gray-500">
                 <p className="mb-2">Don't have a wallet?</p>
                 <div className="flex justify-center space-x-4">
-                  <a 
-                    href="https://www.xverse.app/" 
-                    target="_blank" 
+                  <a
+                    href="https://www.xverse.app/"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-700 flex items-center"
                   >
@@ -349,15 +358,15 @@ export function DataDAOModal({ isOpen, onClose }) {
               <p className="text-gray-600 mb-4">
                 Welcome back! Your wallet is connected and ready to contribute.
               </p>
-              
+
               {/* Wallet Info */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <div className="flex items-center justify-between">
                   <div className="text-left">
                     <p className="text-sm text-gray-600">Connected Wallet</p>
                     <p className="font-mono text-sm text-gray-900">
-                      {user?.starknetAddress ? 
-                        `${user.starknetAddress.slice(0, 6)}...${user.starknetAddress.slice(-4)}` : 
+                      {user?.starknetAddress ?
+                        `${user.starknetAddress.slice(0, 6)}...${user.starknetAddress.slice(-4)}` :
                         'Unknown'
                       }
                     </p>
@@ -369,55 +378,54 @@ export function DataDAOModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-            <div className="space-y-3">
-              <Button 
-                onClick={() => setStep(1)}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-              >
-                <Database className="mr-2 h-4 w-4" />
-                Start Contributing
-              </Button>
-              
-              <Button 
-                onClick={() => setShowUserDashboard(true)}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
-              >
-                <Award className="mr-2 h-4 w-4" />
-                My Dashboard
-              </Button>
-              
-              {isAdmin && (
-                <Button 
-                  onClick={() => setShowAdminDashboard(true)}
-                  className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white"
+              <div className="space-y-3">
+                <Button
+                  onClick={() => setStep(1)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                 >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Admin Dashboard
+                  <Database className="mr-2 h-4 w-4" />
+                  Start Contributing
                 </Button>
-              )}
-              
-              <Button 
-                onClick={disconnectWallet}
-                variant="outline"
-                className="w-full border-gray-300 text-gray-700 hover:border-red-300 hover:text-red-600"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Disconnect Wallet
-              </Button>
-            </div>
+
+                <Button
+                  onClick={() => setShowUserDashboard(true)}
+                  className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+                >
+                  <Award className="mr-2 h-4 w-4" />
+                  My Dashboard
+                </Button>
+
+                {isAdmin && (
+                  <Button
+                    onClick={() => setShowAdminDashboard(true)}
+                    className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white"
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    Admin Dashboard
+                  </Button>
+                )}
+
+                <Button
+                  onClick={disconnectWallet}
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:border-red-300 hover:text-red-600"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Disconnect Wallet
+                </Button>
+              </div>
             </div>
           ) : step === 1 ? (
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Contribution Type</h3>
               <div className="grid gap-4">
                 {contributionTypes.map((type) => (
-                  <Card 
+                  <Card
                     key={type.id}
-                    className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
-                      contributionType === type.id 
-                        ? 'border-blue-500 bg-blue-50' 
+                    className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${contributionType === type.id
+                        ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                     onClick={() => setContributionType(type.id)}
                   >
                     <CardContent className="p-4">
@@ -438,7 +446,7 @@ export function DataDAOModal({ isOpen, onClose }) {
                 ))}
               </div>
               <div className="flex justify-end mt-6">
-                <Button 
+                <Button
                   onClick={() => setStep(2)}
                   disabled={!contributionType}
                   className="bg-blue-600 hover:bg-blue-700"
@@ -556,8 +564,8 @@ export function DataDAOModal({ isOpen, onClose }) {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   disabled={isSubmitting}
                 >

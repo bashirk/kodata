@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(response.user);
       setIsAuthenticated(true);
-      
+
       return response;
     } catch (error) {
       console.error('Login failed:', error);
@@ -83,25 +83,31 @@ export const AuthProvider = ({ children }) => {
     try {
       // Clear authentication state
       logout();
-      
+
       // Try to disconnect from the actual wallet if available
       if (typeof window !== 'undefined') {
         // For Xverse wallet
         if (window.xverseWallet && window.xverseWallet.disconnect) {
           await window.xverseWallet.disconnect();
         }
-        
+
         // For other Starknet wallets
         if (window.starknet && window.starknet.disconnect) {
           await window.starknet.disconnect();
         }
-        
+
         // For Lisk wallets
         if (window.lisk && window.lisk.disconnect) {
           await window.lisk.disconnect();
         }
+
+        // For Ethereum wallets (MetaMask usually doesn't expose disconnect via API, but we try)
+        if (window.ethereum && window.ethereum.disconnect) {
+          // Some custom wallets might have this
+          await window.ethereum.disconnect();
+        }
       }
-      
+
       console.log('Wallet disconnected successfully');
     } catch (error) {
       console.error('Error disconnecting wallet:', error);

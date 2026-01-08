@@ -3,15 +3,15 @@ import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { useAuth } from './contexts/AuthContext'
-import { 
-  Database, 
-  Users, 
-  BookOpen, 
-  Globe, 
-  Award, 
-  ArrowRight, 
-  Mail, 
-  Github, 
+import {
+  Database,
+  Users,
+  BookOpen,
+  Globe,
+  Award,
+  ArrowRight,
+  Mail,
+  Github,
   Twitter,
   ExternalLink,
   Coins,
@@ -52,9 +52,9 @@ function App() {
   }, [])
 
   const partners = [
-    { 
-      name: 'Ethereum Nigeria', 
-      logo: '🇳🇬', 
+    {
+      name: 'Ethereum Nigeria',
+      logo: '🇳🇬',
       description: 'Blockchain community in Nigeria',
       color: 'from-purple-600 to-pink-600',
       url: 'https://ethereumnigeria.org'
@@ -73,9 +73,9 @@ function App() {
     //   color: 'from-purple-500 to-indigo-600',
     //   url: 'https://fil.org'
     // },
-    { 
-      name: 'Filecoin', 
-      logo: '💾', 
+    {
+      name: 'Filecoin',
+      logo: '💾',
       description: 'Decentralized storage protocol',
       color: 'from-indigo-500 to-purple-600',
       url: 'https://filecoin.io'
@@ -178,7 +178,7 @@ function App() {
 
   return (
     <AuthProvider>
-      <AppContent 
+      <AppContent
         isLoaded={isLoaded}
         isDataDAOModalOpen={isDataDAOModalOpen}
         setIsDataDAOModalOpen={setIsDataDAOModalOpen}
@@ -197,7 +197,7 @@ function App() {
 // Separate component that uses AuthContext
 function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showPartnerForm, togglePartnerForm, partners, programs, testimonials, dataDAOFeatures, scrollToSection }) {
   const { user, isAuthenticated } = useAuth()
-  
+
   const openDataDAOModal = () => {
     setIsDataDAOModalOpen(true)
   }
@@ -216,12 +216,12 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-       {/* Floating Action Button */}
-       <button
-         onClick={openDataDAOModal}
+      {/* Floating Action Button */}
+      <button
+        onClick={openDataDAOModal}
         className="group fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-700 hover:via-pink-700 hover:to-purple-700 text-white p-5 rounded-full shadow-2xl hover:shadow-purple-500/25 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 z-50 border-2 border-white/20 backdrop-blur-sm"
-         aria-label={isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO"}
-       >
+        aria-label={isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO"}
+      >
         <div className="relative">
           {isAuthenticated ? (
             <CheckCircle className="h-6 w-6 group-hover:animate-pulse" />
@@ -236,13 +236,13 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
           {isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO"}
           <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
         </div>
-       </button>
-       <DataDAOModal 
-         isOpen={isDataDAOModalOpen} 
-         onClose={() => setIsDataDAOModalOpen(false)} 
-       />
+      </button>
+      <DataDAOModal
+        isOpen={isDataDAOModalOpen}
+        onClose={() => setIsDataDAOModalOpen(false)}
+      />
 
-       {/* Hero Section */}
+      {/* Hero Section */}
       <section id="home" className="relative pt-32 pb-16 lg:pt-40 lg:pb-20 overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"></div>
@@ -292,8 +292,8 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="group relative rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 hover:from-purple-700 hover:via-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-4 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden"
                 onClick={openDataDAOModal}
               >
@@ -304,18 +304,18 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </Button>
 
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="outline"
                 className="rounded-full border-2 border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 px-8 py-4 font-semibold transition-all duration-300"
-                  onClick={() => scrollToSection('#about')}
-                >
+                onClick={() => scrollToSection('#about')}
+              >
                 Explore Our Impact
                 <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </div>
+              </Button>
             </div>
           </div>
+        </div>
       </section>
 
       {/* About Section */}
@@ -345,11 +345,10 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
 
           <div className="grid lg:grid-cols-3 gap-8">
             {programs.map((program, index) => (
-              <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-white/80 backdrop-blur-sm overflow-hidden ${
-                index === 0 ? 'animate-stagger-1' :
-                index === 1 ? 'animate-stagger-2' :
-                'animate-stagger-3'
-              }`}>
+              <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 bg-white/80 backdrop-blur-sm overflow-hidden ${index === 0 ? 'animate-stagger-1' :
+                  index === 1 ? 'animate-stagger-2' :
+                    'animate-stagger-3'
+                }`}>
                 {/* Gradient border effect */}
                 <div className={`absolute inset-0 bg-gradient-to-r ${program.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
 
@@ -361,7 +360,7 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                     {/* Icon glow effect */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${program.color} rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500`}></div>
                     <div className="relative">
-                    {program.icon}
+                      {program.icon}
                     </div>
                   </div>
 
@@ -417,11 +416,10 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
 
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm overflow-hidden ${
-                index === 0 ? 'animate-stagger-1' :
-                index === 1 ? 'animate-stagger-2' :
-                'animate-stagger-3'
-              }`}>
+              <Card key={index} className={`group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm overflow-hidden ${index === 0 ? 'animate-stagger-1' :
+                  index === 1 ? 'animate-stagger-2' :
+                    'animate-stagger-3'
+                }`}>
                 {/* Quote decoration */}
                 <div className="absolute top-4 left-4 text-4xl text-purple-200 opacity-50 group-hover:opacity-75 transition-opacity duration-300">"</div>
 
@@ -510,8 +508,8 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
             ].map((event, index) => (
               <Card key={index} className="group relative overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white border-0">
                 <div className="relative overflow-hidden">
-                  <img 
-                    src={event.image} 
+                  <img
+                    src={event.image}
                     alt={event.title}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -553,11 +551,11 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  <Button 
+                  <Button
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                    onClick={() => window.open('mailto:hi@kobotai.co', '_blank')}
+                    onClick={() => window.open(index === 0 ? 'https://luma.com/9g4dg4rr' : 'mailto:hi@kobotai.co', '_blank')}
                   >
-                    Register Interest
+                    {index === 0 ? 'Register on Luma' : 'Register Interest'}
                   </Button>
                 </CardContent>
               </Card>
@@ -667,8 +665,8 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                       <Coins className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
+                    </div>
+                    <div>
                       <h3 className="text-lg font-bold text-white">MAD Token Rewards</h3>
                       <p className="text-purple-200 text-sm">Earn while you contribute</p>
                     </div>
@@ -687,7 +685,7 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                     <div className="flex justify-between items-center p-3 bg-white/10 rounded-lg border border-pink-400/30 backdrop-blur-sm">
                       <span className="text-pink-100">Cultural Context Data</span>
                       <Badge className="bg-pink-600/50 text-pink-100 border-pink-400/50">100 MAD/GB</Badge>
-                </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -715,12 +713,12 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                     <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
                       <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                         1
-                  </div>
+                      </div>
                       <div>
                         <p className="text-white font-medium">Connect Your Wallet</p>
                         <p className="text-blue-200 text-sm">Secure Web3 authentication</p>
-                </div>
-              </div>
+                      </div>
+                    </div>
 
                     <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
                       <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
@@ -730,27 +728,27 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                         <p className="text-white font-medium">Upload & Validate Data</p>
                         <p className="text-purple-200 text-sm">Contribute to our ecosystem</p>
                       </div>
-                  </div>
+                    </div>
 
                     <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors duration-300">
                       <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                         3
-                  </div>
+                      </div>
                       <div>
                         <p className="text-white font-medium">Earn MAD Tokens</p>
                         <p className="text-pink-200 text-sm">Instant rewards on-chain</p>
-                </div>
-              </div>
-            </div>
+                      </div>
+                    </div>
+                  </div>
 
-                  <Button 
-                  size="lg" 
+                  <Button
+                    size="lg"
                     className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-700 hover:via-pink-700 hover:to-purple-700 text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-                  onClick={openDataDAOModal}
-                >
+                    onClick={openDataDAOModal}
+                  >
                     <Coins className="mr-2 h-5 w-5" />
-                  {isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO Now"}
-                </Button>
+                    {isAuthenticated ? "Open DataDAO Dashboard" : "Join DataDAO Now"}
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -767,11 +765,11 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                     <div className="text-center p-4 bg-white/10 rounded-lg border border-blue-400/30 backdrop-blur-sm">
                       <div className="text-2xl font-bold text-blue-300">Governance</div>
                       <div className="text-sm text-blue-200">Voting Rights</div>
-                  </div>
+                    </div>
                     <div className="text-center p-4 bg-white/10 rounded-lg border border-purple-400/30 backdrop-blur-sm">
                       <div className="text-2xl font-bold text-purple-300">Advanced</div>
                       <div className="text-sm text-purple-200">Learning</div>
-                  </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -806,7 +804,7 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             {partners.map((partner, index) => (
               <Card key={index} className="group relative border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm overflow-hidden cursor-pointer"
-                    onClick={() => partner.url !== '#' && window.open(partner.url, '_blank')}>
+                onClick={() => partner.url !== '#' && window.open(partner.url, '_blank')}>
                 {/* Gradient border effect */}
                 <div className={`absolute inset-0 bg-gradient-to-r ${partner.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-lg`}></div>
 
@@ -818,7 +816,7 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                     {/* Icon glow effect */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${partner.color} rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500`}></div>
                     <div className="relative">
-                    {partner.logo}
+                      {partner.logo}
                     </div>
                   </div>
 
@@ -844,8 +842,8 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
               <div className="max-w-2xl mx-auto">
                 <PartnerForm showPartnerForm={showPartnerForm} togglePartnerForm={togglePartnerForm} />
                 <div className="text-center mt-6">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     onClick={togglePartnerForm}
                     className="text-gray-600 hover:text-gray-800"
                   >
@@ -861,10 +859,10 @@ function AppContent({ isLoaded, isDataDAOModalOpen, setIsDataDAOModalOpen, showP
                     Become a Partner
                   </CardTitle>
                   <CardDescription className="text-blue-700">
-                    Join us in empowering African communities through data literacy and Web3 education. 
+                    Join us in empowering African communities through data literacy and Web3 education.
                     We're looking for sponsors and partners like ETHGlobal to support our mission.
                   </CardDescription>
-                  <Button 
+                  <Button
                     className="mt-4 bg-blue-600 hover:bg-blue-700 transition-all duration-200 transform hover:scale-105"
                     onClick={togglePartnerForm}
                   >

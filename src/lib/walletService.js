@@ -9,16 +9,55 @@ class WalletService {
     this.liskWsUrl = import.meta.env.VITE_LISK_WS_URL || 'wss://ws.api.lisk.com/';
   }
 
+  // Ethereum wallet integration
+  async connectEthereumWallet() {
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        // Request account access
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        if (accounts && accounts.length > 0) {
+          return {
+            address: accounts[0],
+            wallet: window.ethereum,
+            type: 'ethereum'
+          };
+        }
+      }
+
+      throw new Error('No Ethereum wallet found. Please install MetaMask or another Web3 wallet.');
+    } catch (error) {
+      console.error('Ethereum wallet connection failed:', error);
+      throw new Error(`Failed to connect Ethereum wallet: ${error.message}`);
+    }
+  }
+
+  async signEthereumMessage(message, wallet) {
+    try {
+      if (wallet.type === 'ethereum') {
+        const signature = await wallet.wallet.request({
+          method: 'personal_sign',
+          params: [message, wallet.address],
+        });
+        return signature;
+      }
+      throw new Error('Invalid wallet type for Ethereum signing');
+    } catch (error) {
+      console.error('Ethereum message signing failed:', error);
+      throw new Error(`Failed to sign message: ${error.message}`);
+    }
+  }
+
   // Starknet wallet integration
   async connectStarknetWallet() {
     try {
       console.log('Attempting to connect Starknet wallet...');
-      
+
       // Check if Xverse wallet is available
       if (typeof window !== 'undefined' && window.xverseWallet) {
         console.log('Xverse wallet detected');
         const wallet = window.xverseWallet;
-        
+
         // Request connection
         await wallet.request({
           method: 'starknet_requestAccounts',
@@ -42,7 +81,7 @@ class WalletService {
       if (typeof window !== 'undefined' && window.starknet) {
         console.log('Generic starknet wallet detected');
         const wallet = window.starknet;
-        
+
         if (!wallet.isConnected) {
           await wallet.enable();
         }
@@ -66,7 +105,7 @@ class WalletService {
     try {
       console.log('Attempting to sign message with wallet:', wallet);
       console.log('Message to sign:', message);
-      
+
       if (wallet.type === 'starknet') {
         // For development, provide mock signature immediately to bypass wallet issues
         if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
@@ -77,48 +116,48 @@ class WalletService {
             recovery: 0
           };
         }
-        
+
         // For Xverse wallet - try account-based signing first (most reliable)
         if (wallet.wallet.account && wallet.wallet.account.signMessage) {
           console.log('Trying Xverse account.signMessage...');
-          
+
           // Try different message formats
           const messageFormats = [
             message, // Original message
             message.replace(/\n/g, ' '), // Single line
             JSON.stringify({ message }), // JSON format
           ];
-          
+
           for (let i = 0; i < messageFormats.length; i++) {
             const msgFormat = messageFormats[i];
             console.log(`Trying Xverse message format ${i + 1}:`, msgFormat);
-            
+
             try {
               // Add timeout to prevent hanging
-              const timeoutPromise = new Promise((_, reject) => 
+              const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Signing timeout')), 10000)
               );
-              
+
               // Try simple message signing first
               const signature = await Promise.race([
                 wallet.wallet.account.signMessage(msgFormat),
                 timeoutPromise
               ]);
-              
+
               console.log(`Xverse account signMessage (format ${i + 1}) successful:`, signature);
               return signature;
             } catch (error) {
               console.log(`Xverse account signMessage (format ${i + 1}) failed:`, error);
             }
           }
-          
+
           // If simple signing fails, try typed data
           console.log('Trying Xverse typed data format...');
           try {
-            const timeoutPromise = new Promise((_, reject) => 
+            const timeoutPromise = new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Typed data signing timeout')), 10000)
             );
-            
+
             const signature = await Promise.race([
               wallet.wallet.account.signMessage({
                 domain: {
@@ -134,18 +173,18 @@ class WalletService {
               }),
               timeoutPromise
             ]);
-            
+
             console.log('Xverse account signMessage (typed) successful:', signature);
             return signature;
           } catch (typedError) {
             console.log('Xverse account signMessage (typed) also failed:', typedError);
           }
         }
-        
+
         // Fallback: try request-based signing (for older Xverse versions)
         if (wallet.wallet.request) {
           console.log('Trying Xverse wallet signing...');
-          
+
           // Try different Xverse signing formats
           const xverseFormats = [
             // Format 1: Basic message signing
@@ -155,7 +194,7 @@ class WalletService {
             },
             // Format 2: With address
             {
-          method: 'starknet_signMessage',
+              method: 'starknet_signMessage',
               params: { message: message, address: wallet.address }
             },
             // Format 3: Personal sign
@@ -169,11 +208,11 @@ class WalletService {
               params: [wallet.address, message]
             }
           ];
-          
+
           for (let i = 0; i < xverseFormats.length; i++) {
             const format = xverseFormats[i];
             console.log(`Trying Xverse format ${i + 1}:`, format);
-            
+
             try {
               const signature = await wallet.wallet.request(format);
               console.log(`Xverse format ${i + 1} successful:`, signature);
@@ -183,19 +222,19 @@ class WalletService {
             }
           }
         }
-        
+
         // Final fallback: try direct signMessage
         if (wallet.wallet.signMessage) {
           console.log('Trying direct signMessage...');
           try {
             const signature = await wallet.wallet.signMessage(message);
             console.log('Direct signMessage successful:', signature);
-        return signature;
+            return signature;
           } catch (error) {
             console.log('Direct signMessage failed:', error);
           }
         }
-        
+
         // If all methods fail, throw a helpful error
         throw new Error('No supported signing method found. Please check your wallet implementation.');
       }
@@ -203,7 +242,7 @@ class WalletService {
       throw new Error('Invalid wallet type for Starknet signing');
     } catch (error) {
       console.error('Starknet message signing failed:', error);
-      
+
       // For development/testing, provide a mock signature
       if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
         console.warn('Using mock signature for development');
@@ -213,7 +252,7 @@ class WalletService {
           recovery: 0
         };
       }
-      
+
       throw new Error(`Failed to sign message: ${error.message}`);
     }
   }
@@ -224,7 +263,7 @@ class WalletService {
       // Check if Lisk wallet is available
       if (typeof window !== 'undefined' && window.lisk) {
         const wallet = window.lisk;
-        
+
         // Request connection
         await wallet.enable();
 
@@ -242,7 +281,7 @@ class WalletService {
       // Fallback: check for Lisk Desktop integration
       if (typeof window !== 'undefined' && window.liskDesktop) {
         const wallet = window.liskDesktop;
-        
+
         const accounts = await wallet.getAccounts();
 
         if (accounts && accounts.length > 0) {
@@ -285,6 +324,8 @@ class WalletService {
       return this.connectStarknetWallet();
     } else if (walletType === 'lisk') {
       return this.connectLiskWallet();
+    } else if (walletType === 'ethereum') {
+      return this.connectEthereumWallet();
     } else {
       throw new Error(`Unsupported wallet type: ${walletType}`);
     }
@@ -296,6 +337,8 @@ class WalletService {
       return this.signStarknetMessage(message, wallet);
     } else if (wallet.type === 'lisk') {
       return this.signLiskMessage(message, wallet);
+    } else if (wallet.type === 'ethereum') {
+      return this.signEthereumMessage(message, wallet);
     } else {
       throw new Error(`Unsupported wallet type: ${wallet.type}`);
     }
@@ -303,44 +346,59 @@ class WalletService {
 
   // Check wallet availability
   isStarknetWalletAvailable() {
-    return typeof window !== 'undefined' && 
-           (window.xverseWallet || window.starknet);
+    return typeof window !== 'undefined' &&
+      (window.xverseWallet || window.starknet);
   }
 
   isLiskWalletAvailable() {
-    return typeof window !== 'undefined' && 
-           (window.lisk || window.liskDesktop);
+    return typeof window !== 'undefined' &&
+      (window.lisk || window.liskDesktop);
   }
 
-  // Get wallet instructions
-  getWalletInstructions(walletType) {
-    const instructions = {
-      starknet: {
-        title: 'Connect Starknet Wallet',
-        steps: [
-          'Install Xverse wallet browser extension',
-          'Create or import a Starknet account',
-          'Make sure you have some testnet ETH',
-          'Click "Connect Starknet Wallet" below'
-        ],
-        downloadUrl: 'https://www.xverse.app/',
-        testnetFaucet: 'https://starknet-faucet.vercel.app/'
-      },
-      lisk: {
-        title: 'Connect Lisk Wallet',
-        steps: [
-          'Download Lisk Desktop application',
-          'Create or import a Lisk account',
-          'Make sure you have some LSK tokens',
-          'Use the web wallet integration'
-        ],
-        downloadUrl: 'https://lisk.com/desktop',
-        testnetFaucet: 'https://testnet.lisk.com/'
-      }
-    };
+isEthereumWalletAvailable() {
+  return typeof window !== 'undefined' && window.ethereum;
+}
 
-    return instructions[walletType] || null;
-  }
+// Get wallet instructions
+getWalletInstructions(walletType) {
+  const instructions = {
+    starknet: {
+      title: 'Connect Starknet Wallet',
+      steps: [
+        'Install Xverse wallet browser extension',
+        'Create or import a Starknet account',
+        'Make sure you have some testnet ETH',
+        'Click "Connect Starknet Wallet" below'
+      ],
+      downloadUrl: 'https://www.xverse.app/',
+      testnetFaucet: 'https://starknet-faucet.vercel.app/'
+    },
+    lisk: {
+      title: 'Connect Lisk Wallet',
+      steps: [
+        'Download Lisk Desktop application',
+        'Create or import a Lisk account',
+        'Make sure you have some LSK tokens',
+        'Use the web wallet integration'
+      ],
+      downloadUrl: 'https://lisk.com/desktop',
+      downloadUrl: 'https://lisk.com/desktop',
+      testnetFaucet: 'https://testnet.lisk.com/'
+    },
+    ethereum: {
+      title: 'Connect Ethereum Wallet',
+      steps: [
+        'Install MetaMask browser extension',
+        'Create or import an Ethereum account',
+        'Click "Connect Ethereum Wallet" below'
+      ],
+      downloadUrl: 'https://metamask.io/download/',
+      testnetFaucet: 'https://sepoliafaucet.com/'
+    }
+  };
+
+  return instructions[walletType] || null;
+}
 }
 
 export const walletService = new WalletService();

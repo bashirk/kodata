@@ -57,10 +57,8 @@ services:
       - LISK_BACKEND_PUBKEY=${LISK_BACKEND_PUBKEY}
       - LISK_BACKEND_PRIVKEY=${LISK_BACKEND_PRIVKEY}
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - redis
     networks:
       - kodata-network
     volumes:
